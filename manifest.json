@@ -1,0 +1,24 @@
+{
+  "manifest_version": 3,
+  "name": "SideYomi",
+  "version": "0.1.0",
+  "description": "일본어 발음·단어 뜻을 Side Panel에서 확인하는 크롬 익스텐션",
+  "permissions": ["sidePanel", "storage", "activeTab"],
+  "host_permissions": ["<all_urls>"],
+  "side_panel": {
+    "default_path": "src/sidepanel/index.html"
+  },
+  "background": {
+    "service_worker": "src/background/index.ts",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["src/content/index.ts"]
+    }
+  ],
+  "action": {
+    "default_title": "SideYomi"
+  }
+}
