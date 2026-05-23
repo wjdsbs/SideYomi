@@ -3,8 +3,8 @@
 ## 브랜치
 
 ```
-main      — 릴리즈 전용, 직접 push 금지
-dev   — 통합 브랜치, feature들의 머지 대상
+main           — 릴리즈 전용, 직접 push 금지
+dev            — 통합 브랜치, feature들의 머지 대상
 feature/N-slug   — 기능 개발 (dev 분기)
 hotfix/slug      — main 긴급 수정 (main + dev 양쪽 머지)
 chore/slug       — 빌드·설정·문서
@@ -49,14 +49,14 @@ type(scope): 변경 내용 요약
 
 **예시**
 
-````
+```
 feat(kuromoji): lazy-load singleton 초기화 추가
 
 설치 시가 아닌 첫 텍스트 선택 시점에 토크나이저를 초기화.
 모듈 레벨 변수에 인스턴스를 저장해 리렌더링 후에도 유지.
 
 Closes #3
-```5
+```
 
 ## PR
 
@@ -66,17 +66,20 @@ Closes #3
 
 **머지 전략**
 
-| 상황                          | 전략             |
-| ----------------------------- | ---------------- |
+| 상황                      | 전략             |
+| ------------------------- | ---------------- |
 | `feature` → `dev`         | Squash and merge |
 | `dev` → `main`            | Merge commit     |
 | `hotfix` → `main` + `dev` | Merge commit     |
 
 **PR 체크리스트**
 
-- [ ] `pnpm build` 통과
+- [ ] `npm build` 통과
 - [ ] Side Panel 동작 확인
 - [ ] DOM 수정 없음
 - [ ] API 키 하드코딩 없음
 - [ ] `console.log` 제거
-````
+
+```
+
+```
