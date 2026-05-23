@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "SideYomi",
   "version": "0.1.0",
-  "description": "일본어 발음·단어 뜻을 Side Panel에서 확인하는 크롬 익스텐션",
+  "description": "일본어 발음·단어 뜻을 Side Panel에서 확인하는 도구",
   "permissions": ["sidePanel", "storage", "activeTab"],
   "host_permissions": ["<all_urls>"],
   "side_panel": {
