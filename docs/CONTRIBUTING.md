@@ -4,16 +4,16 @@
 
 ```
 main      — 릴리즈 전용, 직접 push 금지
-develop   — 통합 브랜치, feature들의 머지 대상
-feature/N-slug   — 기능 개발 (develop에서 분기)
-hotfix/slug      — main 긴급 수정 (main + develop 양쪽 머지)
+dev   — 통합 브랜치, feature들의 머지 대상
+feature/N-slug   — 기능 개발 (dev 분기)
+hotfix/slug      — main 긴급 수정 (main + dev 양쪽 머지)
 chore/slug       — 빌드·설정·문서
 ```
 
 브랜치명은 소문자 + 하이픈. 이슈 번호를 앞에 붙인다.
 
 ```bash
-git checkout develop
+git checkout dev
 git checkout -b feature/3-kuromoji-lazy-load
 ```
 
@@ -49,28 +49,28 @@ type(scope): 변경 내용 요약
 
 **예시**
 
-```
+````
 feat(kuromoji): lazy-load singleton 초기화 추가
 
 설치 시가 아닌 첫 텍스트 선택 시점에 토크나이저를 초기화.
 모듈 레벨 변수에 인스턴스를 저장해 리렌더링 후에도 유지.
 
 Closes #3
-```
+```5
 
 ## PR
 
-- base 브랜치는 항상 `develop`
+- base 브랜치는 항상 `dev`
 - 제목은 커밋 메시지 형식과 동일하게 (`feat(scope): ... — close #N`)
-- `develop → main` 머지 시에만 버전 태그 추가
+- `dev → main` 머지 시에만 버전 태그 추가
 
 **머지 전략**
 
 | 상황                          | 전략             |
 | ----------------------------- | ---------------- |
-| `feature` → `develop`         | Squash and merge |
-| `develop` → `main`            | Merge commit     |
-| `hotfix` → `main` + `develop` | Merge commit     |
+| `feature` → `dev`         | Squash and merge |
+| `dev` → `main`            | Merge commit     |
+| `hotfix` → `main` + `dev` | Merge commit     |
 
 **PR 체크리스트**
 
@@ -79,3 +79,4 @@ Closes #3
 - [ ] DOM 수정 없음
 - [ ] API 키 하드코딩 없음
 - [ ] `console.log` 제거
+````
