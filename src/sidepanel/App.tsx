@@ -1,69 +1,19 @@
 import { useEffect, useRef, useState } from 'react';
-import kuromoji from 'kuromoji';
-import { tokenize } from '../lib/kuromoji';
-import { hasKanji, toHiragana, buildRomaji } from '../lib/japanese';
-import { lookupWord } from '../lib/gemini';
-import type { WordResult } from '../lib/gemini';
+import { useReader } from '../hooks/useReader';
+import { useWordLookup } from '../hooks/useWordLookup';
+import { useWordbook } from '../hooks/useWordbook';
+import { useHistory } from '../hooks/useHistory';
+import { useSplitLayout } from '../hooks/useSplitLayout';
 import { WordCard } from './components/WordCard';
 import { Settings } from './components/Settings';
 import { SessionStrip } from './components/SessionStrip';
 import { BookmarksOver, HistoryOver } from './components/SlideOver';
-import type { BookmarkItem, HistoryItem } from './components/SlideOver';
+import { Toolbar } from './components/Toolbar';
+import { SourceCrumb } from './components/SourceCrumb';
+import { TokenFlow } from './components/TokenFlow';
 import { IconBook, IconClock, IconSettings, IconSparkle, IconStar } from './components/Icons';
 
-type Token = kuromoji.IpadicFeatures;
-type Status = 'idle' | 'loading' | 'done' | 'error';
-type LookupStatus = 'loading' | 'done' | 'no-key' | 'error';
 type Over = 'bookmarks' | 'history' | 'settings' | null;
-
-function useLocalToggle(key: string, defaultValue: boolean) {
-  const [value, setValue] = useState(() =>
-    localStorage.getItem(key) !== null ? localStorage.getItem(key) === 'true' : defaultValue,
-  );
-  const toggle = () =>
-    setValue((v) => {
-      localStorage.setItem(key, String(!v));
-      return !v;
-    });
-  return [value, toggle] as const;
-}
-
-function ToggleChip({
-  label,
-  active,
-  onClick,
-  icon,
-}: {
-  label: string;
-  active: boolean;
-  onClick: () => void;
-  icon?: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 4,
-        fontSize: 11,
-        padding: '3px 9px',
-        borderRadius: 999,
-        color: active ? 'var(--accent)' : 'var(--ink-mute)',
-        background: active ? 'var(--accent-soft)' : 'transparent',
-        border: `1px solid ${active ? 'var(--accent-line)' : 'var(--rule)'}`,
-        fontWeight: 500,
-        cursor: 'pointer',
-        transition: 'all .15s',
-        fontFamily: 'var(--font-ui)',
-      }}
-    >
-      {icon}
-      {label}
-    </button>
-  );
-}
 
 function IconBtn({
   children,
@@ -132,74 +82,38 @@ function IconBtn({
 }
 
 export default function App() {
-  const [tokens, setTokens] = useState<Token[]>([]);
-  const [status, setStatus] = useState<Status>('idle');
   const [source, setSource] = useState<{ title: string; url: string } | null>(null);
-
-  const [showFurigana, toggleFurigana] = useLocalToggle('showFurigana', true);
-  const [showRomaji, toggleRomaji] = useLocalToggle('showRomaji', false);
-
-  const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
-  const [wordResult, setWordResult] = useState<WordResult | null>(null);
-  const [lookupStatus, setLookupStatus] = useState<LookupStatus | null>(null);
-  const [lookupError, setLookupError] = useState<string | undefined>(undefined);
-
-  const [session, setSession] = useState<string[]>([]);
-  const [history, setHistory] = useState<HistoryItem[]>([]);
-  const [bookmarks, setBookmarks] = useState<Set<string>>(new Set());
-  const [bookmarkList, setBookmarkList] = useState<BookmarkItem[]>([]);
   const [over, setOver] = useState<Over>(null);
 
+  const reader = useReader();
+  const lookup = useWordLookup();
+  const wordbook = useWordbook();
+  const { history, pushHistory } = useHistory();
+
   const wrapperRef = useRef<HTMLDivElement>(null);
-  const [split, setSplit] = useState(() => Number(localStorage.getItem('splitRatio')) || 42);
-  const dragging = useRef(false);
-  const reqIdRef = useRef(0);
+  const layout = useSplitLayout(wrapperRef);
 
-  // Load bookmarks from storage on mount
-  useEffect(() => {
-    chrome.storage.local.get('wordBookmarks', ({ wordBookmarks }) => {
-      if (!wordBookmarks) return;
-      const list = wordBookmarks as BookmarkItem[];
-      setBookmarkList(list);
-      setBookmarks(new Set(list.map((b) => b.word)));
-    });
-  }, []);
+  // 안정적인 콜백만 구조 분해 — useEffect deps에 직접 사용
+  const { load, selectedToken, pushSession } = reader;
 
-  // Listen for text selection from content script
+  // 텍스트 선택 메시지 수신
   useEffect(() => {
     const handler = (message: { type: string; text: string; title?: string; url?: string }) => {
       if (message.type !== 'TEXT_SELECTED') return;
-      setStatus('loading');
-      setSelectedIdx(null);
-      setWordResult(null);
-      setLookupStatus(null);
+      load(message.text);
       if (message.title || message.url) {
         setSource({ title: message.title ?? '', url: message.url ?? '' });
       }
-      tokenize(message.text)
-        .then((result) => {
-          setTokens(result);
-          setStatus('done');
-        })
-        .catch((err) => {
-          // eslint-disable-next-line no-console
-          console.error('[SideYomi] tokenize error', err);
-          setStatus('error');
-        });
     };
     chrome.runtime.onMessage.addListener(handler);
     return () => chrome.runtime.onMessage.removeListener(handler);
-  }, []);
+  }, [load]);
 
-  // Update history and session when a lookup completes
+  // 조회 완료 시 히스토리 + 세션 업데이트
   useEffect(() => {
-    if (lookupStatus !== 'done' || selectedIdx === null || !wordResult) return;
-    const tok = tokens[selectedIdx];
-    if (!tok || tok.pos === '記号') return;
-    const word = tok.surface_form;
-    const reading = tok.reading ? toHiragana(tok.reading) : tok.surface_form;
-
-    setSession((s) => [word, ...s.filter((w) => w !== word)].slice(0, 8));
+    if (lookup.status !== 'done' || !selectedToken) return;
+    const token = selectedToken;
+    if (token.isPunctuation) return;
 
     const src = source?.url
       ? (() => {
@@ -211,141 +125,32 @@ export default function App() {
         })()
       : 'この画面';
 
-    setHistory((h) =>
-      [{ word, reading, time: '방금', src }, ...h.filter((item) => item.word !== word)].slice(
-        0,
-        50,
-      ),
-    );
-  }, [lookupStatus, selectedIdx, wordResult, tokens, source]);
+    pushHistory(token, src);
+    pushSession(token.surface);
+  }, [lookup.status, selectedToken, pushSession, pushHistory, source]);
 
-  const handleTokenClick = (token: Token, idx: number) => {
-    if (selectedIdx === idx) {
-      setSelectedIdx(null);
-      setWordResult(null);
-      setLookupStatus(null);
+  const handleTokenClick = (idx: number) => {
+    const token = reader.tokens[idx];
+    if (!token) return;
+
+    if (reader.selectedIdx === idx) {
+      reader.deselectToken();
+      lookup.reset();
       return;
     }
 
-    setSelectedIdx(idx);
-    setWordResult(null);
-    setLookupError(undefined);
+    reader.selectToken(idx);
+    lookup.reset();
 
-    const reading = token.reading ? toHiragana(token.reading) : token.surface_form;
-    const cacheKey = `${token.surface_form}|${reading}`;
-    const prev = tokens[idx - 1]?.surface_form ?? '';
-    const next = tokens[idx + 1]?.surface_form ?? '';
-    const context = [prev, token.surface_form, next].filter(Boolean).join(' ');
-
-    // Stale-response guard: discard results if user clicked another token
-    reqIdRef.current += 1;
-    const reqId = reqIdRef.current;
-
-    chrome.storage.local.get(['groqApiKey', 'wordCache'], ({ groqApiKey, wordCache }) => {
-      if (reqId !== reqIdRef.current) return;
-
-      if (!groqApiKey) {
-        setLookupStatus('no-key');
-        return;
-      }
-
-      const cache = (wordCache ?? {}) as Record<string, WordResult>;
-      if (cache[cacheKey]) {
-        setWordResult(cache[cacheKey]);
-        setLookupStatus('done');
-        return;
-      }
-
-      setLookupStatus('loading');
-      lookupWord(token.surface_form, reading, context, groqApiKey)
-        .then((result) => {
-          if (reqId !== reqIdRef.current) return;
-          setWordResult(result);
-          setLookupStatus('done');
-          chrome.storage.local.set({ wordCache: { ...cache, [cacheKey]: result } });
-        })
-        .catch((err: Error) => {
-          if (reqId !== reqIdRef.current) return;
-          setLookupError(err.message);
-          setLookupStatus('error');
-        });
-    });
+    const prev = reader.tokens[idx - 1];
+    const next = reader.tokens[idx + 1];
+    lookup.lookup(token, token.getContext(prev, next));
   };
 
-  const handleBookmark = () => {
-    if (selectedIdx === null) return;
-    const tok = tokens[selectedIdx];
-    if (!tok) return;
-    const word = tok.surface_form;
-    const reading = tok.reading ? toHiragana(tok.reading) : tok.surface_form;
-    const meaning = wordResult?.meanings[0] ?? '';
-
-    setBookmarks((prev) => {
-      const next = new Set(prev);
-      let nextList: BookmarkItem[];
-      if (next.has(word)) {
-        next.delete(word);
-        nextList = bookmarkList.filter((b) => b.word !== word);
-      } else {
-        next.add(word);
-        nextList = [{ word, reading, meaning, addedAt: Date.now() }, ...bookmarkList];
-      }
-      setBookmarkList(nextList);
-      chrome.storage.local.set({ wordBookmarks: nextList });
-      return next;
-    });
+  const handleClose = () => {
+    reader.deselectToken();
+    lookup.reset();
   };
-
-  const handleRemoveBookmark = (word: string) => {
-    setBookmarks((prev) => {
-      const next = new Set(prev);
-      next.delete(word);
-      const nextList = bookmarkList.filter((b) => b.word !== word);
-      setBookmarkList(nextList);
-      chrome.storage.local.set({ wordBookmarks: nextList });
-      return next;
-    });
-  };
-
-  const jumpToWord = (word: string) => {
-    const idx = tokens.findIndex((t) => t.surface_form === word);
-    if (idx >= 0) {
-      setOver(null);
-      handleTokenClick(tokens[idx], idx);
-    }
-  };
-
-  const onHandleDown = (e: React.MouseEvent) => {
-    dragging.current = true;
-    e.preventDefault();
-    let lastPct = split;
-    const onMove = (ev: MouseEvent) => {
-      if (!dragging.current || !wrapperRef.current) return;
-      const rect = wrapperRef.current.getBoundingClientRect();
-      lastPct = Math.max(20, Math.min(75, ((ev.clientY - rect.top) / rect.height) * 100));
-      setSplit(lastPct);
-    };
-    const onUp = () => {
-      dragging.current = false;
-      localStorage.setItem('splitRatio', String(lastPct));
-      window.removeEventListener('mousemove', onMove);
-      window.removeEventListener('mouseup', onUp);
-    };
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup', onUp);
-  };
-
-  const wordCount = tokens.filter((t) => t.pos !== '記号').length;
-
-  const hostname = source?.url
-    ? (() => {
-        try {
-          return new URL(source.url).hostname;
-        } catch {
-          return '';
-        }
-      })()
-    : '';
 
   return (
     <div
@@ -362,7 +167,7 @@ export default function App() {
         WebkitFontSmoothing: 'antialiased',
       }}
     >
-      {/* Header */}
+      {/* 헤더 */}
       <header
         style={{
           padding: '11px 12px 9px',
@@ -391,7 +196,11 @@ export default function App() {
           </span>
         </div>
         <div style={{ display: 'flex', gap: 2 }}>
-          <IconBtn label="단어장" onClick={() => setOver('bookmarks')} badge={bookmarks.size}>
+          <IconBtn
+            label="단어장"
+            onClick={() => setOver('bookmarks')}
+            badge={wordbook.wordbook.size}
+          >
             <IconBook size={15} />
           </IconBtn>
           <IconBtn label="최근 본 단어" onClick={() => setOver('history')}>
@@ -403,54 +212,16 @@ export default function App() {
         </div>
       </header>
 
-      {/* Source crumb */}
-      {source && (
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            padding: '5px 14px',
-            fontSize: 10.5,
-            color: 'var(--ink-mute)',
-            borderBottom: '1px solid var(--rule-soft)',
-            background: 'var(--paper-soft)',
-            flex: '0 0 auto',
-            overflow: 'hidden',
-          }}
-        >
-          <span
-            style={{
-              width: 6,
-              height: 6,
-              borderRadius: '50%',
-              background: 'var(--accent)',
-              flex: '0 0 auto',
-            }}
-          />
-          <span
-            style={{
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-              flex: 1,
-            }}
-          >
-            {source.title}
-          </span>
-          {hostname && (
-            <span style={{ color: 'var(--ink-faint)', flex: '0 0 auto' }}>{hostname}</span>
-          )}
-        </div>
-      )}
+      {/* 출처 */}
+      {source && <SourceCrumb title={source.title} url={source.url} />}
 
-      {/* Non-done states: full height */}
-      {status !== 'done' && (
+      {/* 비활성 상태 */}
+      {reader.status !== 'done' && (
         <div
           className="sy-scroll"
           style={{ flex: 1, overflowY: 'auto', padding: '16px 14px 20px' }}
         >
-          {status === 'idle' && (
+          {reader.status === 'idle' && (
             <div
               style={{
                 padding: '48px 24px',
@@ -483,14 +254,14 @@ export default function App() {
               </div>
             </div>
           )}
-          {status === 'loading' && (
+          {reader.status === 'loading' && (
             <div style={{ padding: '12px 0' }}>
               <div className="sy-skel" style={{ height: 22, width: '80%', marginBottom: 12 }} />
               <div className="sy-skel" style={{ height: 22, width: '60%', marginBottom: 12 }} />
               <div className="sy-skel" style={{ height: 22, width: '90%' }} />
             </div>
           )}
-          {status === 'error' && (
+          {reader.status === 'error' && (
             <p style={{ fontSize: 12, color: 'var(--err)', margin: 0 }}>
               분석 실패. 다시 시도해 주세요.
             </p>
@@ -498,165 +269,47 @@ export default function App() {
         </div>
       )}
 
-      {/* Split layout — shown only when done */}
-      {status === 'done' && (
+      {/* Split 레이아웃 */}
+      {reader.status === 'done' && (
         <div
           ref={wrapperRef}
           style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}
         >
-          {/* Top: toolbar + reading flow */}
+          {/* 상단: 툴바 + 토큰 */}
           <section
             style={{
-              height: `${split}%`,
+              height: `${layout.split}%`,
               minHeight: 80,
               display: 'flex',
               flexDirection: 'column',
               overflow: 'hidden',
             }}
           >
-            {/* Toolbar */}
-            <div
-              style={{
-                display: 'flex',
-                gap: 6,
-                padding: '6px 12px',
-                alignItems: 'center',
-                borderBottom: '1px solid var(--rule-soft)',
-                flex: '0 0 auto',
-              }}
-            >
-              <ToggleChip
-                label="후리가나"
-                active={showFurigana}
-                onClick={toggleFurigana}
-                icon={<span style={{ fontFamily: 'var(--font-jp-sans)', fontSize: 9 }}>ふ</span>}
-              />
-              <ToggleChip
-                label="로마자"
-                active={showRomaji}
-                onClick={toggleRomaji}
-                icon={<span style={{ fontFamily: 'var(--font-mono)', fontSize: 9 }}>A</span>}
-              />
-              <div style={{ flex: 1 }} />
-              <span style={{ fontSize: 10.5, color: 'var(--ink-faint)' }}>{wordCount}어</span>
-            </div>
-
-            {/* Tokens */}
+            <Toolbar
+              showFurigana={reader.showFurigana}
+              showRomaji={reader.showRomaji}
+              wordCount={reader.wordCount}
+              onToggleFurigana={reader.toggleFurigana}
+              onToggleRomaji={reader.toggleRomaji}
+            />
             <div
               className="sy-scroll"
               style={{ flex: 1, overflowY: 'auto', padding: '12px 14px 10px' }}
             >
-              <div style={{ position: 'relative' }}>
-                {selectedIdx !== null && (
-                  <span
-                    style={{
-                      position: 'absolute',
-                      left: -10,
-                      top: 4,
-                      bottom: 4,
-                      width: 2,
-                      background: 'var(--accent-line)',
-                      borderRadius: 1,
-                      opacity: 0.6,
-                    }}
-                  />
-                )}
-                <div
-                  style={{
-                    fontFamily: 'var(--font-jp)',
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    gap: '1px 0',
-                    alignItems: 'flex-end',
-                    lineHeight: 2.2,
-                    fontSize: 17,
-                  }}
-                >
-                  {tokens.map((token, i) => {
-                    const furigana =
-                      showFurigana && hasKanji(token.surface_form) && token.reading
-                        ? toHiragana(token.reading)
-                        : null;
-                    const isPunct = token.pos === '記号';
-                    const tokRomaji = showRomaji && !isPunct ? buildRomaji([token]) : null;
-                    return (
-                      <button
-                        key={`${token.word_position}-${token.surface_form}`}
-                        type="button"
-                        onClick={isPunct ? undefined : () => handleTokenClick(token, i)}
-                        style={{
-                          display: 'inline-flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          padding: isPunct ? '2px 1px 3px' : '2px 3px 3px',
-                          borderRadius: 'var(--r-xs)',
-                          background: selectedIdx === i ? 'var(--mark)' : 'transparent',
-                          boxShadow: selectedIdx === i ? 'inset 0 -2px 0 var(--mark-line)' : 'none',
-                          cursor: isPunct ? 'default' : 'pointer',
-                          border: 'none',
-                          transition: 'background .12s, box-shadow .12s',
-                        }}
-                        onMouseEnter={(e) => {
-                          if (!isPunct && selectedIdx !== i) {
-                            (e.currentTarget as HTMLElement).style.background = 'var(--paper-sunk)';
-                          }
-                        }}
-                        onMouseLeave={(e) => {
-                          if (selectedIdx !== i) {
-                            (e.currentTarget as HTMLElement).style.background = 'transparent';
-                          }
-                        }}
-                      >
-                        <span
-                          style={{
-                            fontFamily: 'var(--font-jp-sans)',
-                            fontSize: '0.55em',
-                            color: 'var(--ink-mute)',
-                            letterSpacing: '0.02em',
-                            marginBottom: '0.15em',
-                            minHeight: furigana ? undefined : '0.7em',
-                            fontWeight: 400,
-                          }}
-                        >
-                          {furigana ?? ''}
-                        </span>
-                        <span
-                          style={{
-                            fontFamily: 'var(--font-jp)',
-                            fontWeight: 500,
-                            color:
-                              token.pos === '助詞' || token.pos === '助動詞'
-                                ? 'var(--ink-mute)'
-                                : 'var(--ink)',
-                          }}
-                        >
-                          {token.surface_form}
-                        </span>
-                        {tokRomaji && (
-                          <span
-                            style={{
-                              fontFamily: 'var(--font-mono)',
-                              fontSize: 9,
-                              color: 'var(--ink-faint)',
-                              marginTop: 2,
-                              letterSpacing: '0.02em',
-                            }}
-                          >
-                            {tokRomaji}
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
+              <TokenFlow
+                tokens={reader.tokens}
+                selectedIdx={reader.selectedIdx}
+                showFurigana={reader.showFurigana}
+                showRomaji={reader.showRomaji}
+                onTokenClick={handleTokenClick}
+              />
             </div>
           </section>
 
-          {/* Drag handle */}
+          {/* 드래그 핸들 */}
           <button
             type="button"
-            onMouseDown={onHandleDown}
+            onMouseDown={layout.onHandleDown}
             aria-label="분할 조절"
             style={{
               height: 8,
@@ -670,12 +323,13 @@ export default function App() {
               justifyContent: 'center',
               flex: '0 0 auto',
               padding: 0,
+              border: 'none',
             }}
           >
             <div style={{ width: 28, height: 2, borderRadius: 1, background: 'var(--rule)' }} />
           </button>
 
-          {/* Bottom: word detail */}
+          {/* 하단: 단어 상세 */}
           <section
             style={{
               flex: 1,
@@ -686,20 +340,28 @@ export default function App() {
               overflow: 'hidden',
             }}
           >
-            {selectedIdx !== null && lookupStatus !== null ? (
+            {reader.selectedToken && lookup.status !== null ? (
               <WordCard
                 flat
-                token={tokens[selectedIdx]}
-                result={wordResult}
-                status={lookupStatus}
-                error={lookupError}
-                bookmarked={bookmarks.has(tokens[selectedIdx]?.surface_form ?? '')}
-                onBookmark={handleBookmark}
-                onClose={() => {
-                  setSelectedIdx(null);
-                  setWordResult(null);
-                  setLookupStatus(null);
+                token={reader.selectedToken.toRaw()}
+                result={
+                  lookup.entry
+                    ? {
+                        meanings: lookup.entry.meanings,
+                        pos: lookup.entry.pos,
+                        examples: lookup.entry.examples,
+                        related: lookup.entry.related,
+                      }
+                    : null
+                }
+                status={lookup.status}
+                error={lookup.error}
+                bookmarked={wordbook.wordbook.has(reader.selectedToken.surface)}
+                onBookmark={() => {
+                  if (reader.selectedToken)
+                    wordbook.toggleBookmark(reader.selectedToken, lookup.entry);
                 }}
+                onClose={handleClose}
               />
             ) : (
               <div
@@ -723,17 +385,31 @@ export default function App() {
         </div>
       )}
 
-      {/* Session strip */}
-      <SessionStrip session={session} onJump={jumpToWord} onClear={() => setSession([])} />
+      {/* 세션 스트립 */}
+      <SessionStrip
+        session={reader.session.toList()}
+        onJump={(word) => {
+          const idx = reader.tokens.findIndex((t) => t.surface === word);
+          if (idx >= 0) {
+            setOver(null);
+            handleTokenClick(idx);
+          }
+        }}
+        onClear={reader.clearSession}
+      />
 
-      {/* Slide-overs */}
+      {/* 슬라이드오버 */}
       <BookmarksOver
         open={over === 'bookmarks'}
         onClose={() => setOver(null)}
-        items={bookmarkList}
-        onRemove={handleRemoveBookmark}
+        items={wordbook.wordbook.toList()}
+        onRemove={(word) => wordbook.removeBookmark(word)}
       />
-      <HistoryOver open={over === 'history'} onClose={() => setOver(null)} items={history} />
+      <HistoryOver
+        open={over === 'history'}
+        onClose={() => setOver(null)}
+        items={history.toList()}
+      />
       {over === 'settings' && <Settings onClose={() => setOver(null)} />}
     </div>
   );
