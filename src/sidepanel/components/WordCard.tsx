@@ -6,7 +6,7 @@ import { IconSpeaker, IconStar, IconStarFill, IconClose, IconPlus, IconCopy } fr
 
 type LookupStatus = 'loading' | 'done' | 'no-key' | 'error';
 
-type Props = {
+type WordCardProps = {
   token: JapaneseToken;
   result: WordEntry | null;
   status: LookupStatus;
@@ -14,8 +14,9 @@ type Props = {
   bookmarked: boolean;
   onBookmark: () => void;
   onClose: () => void;
-  flat?: boolean;
 };
+
+// ── SpeakerButton ──────────────────────────────────────────────────────────
 
 export function SpeakerButton({ word }: { word: string }) {
   const [playing, setPlaying] = useState(false);
@@ -50,6 +51,8 @@ export function SpeakerButton({ word }: { word: string }) {
     </button>
   );
 }
+
+// ── Internal sub-components ────────────────────────────────────────────────
 
 function IconBtn({
   children,
@@ -110,7 +113,10 @@ function Skel({ w, h = 11 }: { w: string; h?: number }) {
   return <div className="sy-skel" style={{ width: w, height: h, marginBottom: 4 }} />;
 }
 
-export function WordCard({
+// ── WordCardContent ────────────────────────────────────────────────────────
+// 공통 내용(헤더·바디·푸터). 외부 컨테이너 레이아웃은 호출자가 결정.
+
+function WordCardContent({
   token,
   result,
   status,
@@ -118,10 +124,9 @@ export function WordCard({
   bookmarked,
   onBookmark,
   onClose,
-  flat = false,
-}: Props) {
+  scrollableBody = false,
+}: WordCardProps & { scrollableBody?: boolean }) {
   const { reading, romaji } = token;
-  const cardRef = useRef<HTMLElement>(null);
 
   const [toast, setToast] = useState<string | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -153,27 +158,10 @@ export function WordCard({
     showToast('Anki 카드 추가됨');
   };
 
-  useEffect(() => {
-    if (flat || !cardRef.current) return;
-    cardRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  }, [token.surface, flat]);
-
   return (
-    <article
-      ref={cardRef}
-      className={cn(
-        flat
-          ? 'flex flex-col h-full'
-          : 'sy-rise mt-2 relative bg-paper-soft border border-rule rounded-md overflow-hidden',
-      )}
-    >
-      {/* pointer triangle — inline mode only */}
-      {!flat && (
-        <span className="absolute -top-1.5 left-5 w-[11px] h-[11px] bg-paper-soft border-l border-t border-rule rotate-45" />
-      )}
-
+    <>
       {/* header */}
-      <header className={cn('flex-none', flat ? 'px-3.5 pt-3 pb-2' : 'px-3.5 pt-3.5 pb-2.5')}>
+      <header className="px-3.5 pt-3 pb-2 flex-none">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
             {reading && (
@@ -204,7 +192,7 @@ export function WordCard({
       </header>
 
       {/* body */}
-      <div className={cn('px-3.5 pb-3', flat && 'sy-scroll flex-1 overflow-y-auto')}>
+      <div className={cn('px-3.5 pb-3', scrollableBody && 'sy-scroll flex-1 overflow-y-auto')}>
         {status === 'loading' && (
           <div>
             <Skel w="50%" h={14} />
@@ -290,6 +278,71 @@ export function WordCard({
           )}
         </footer>
       )}
+    </>
+  );
+}
+
+// ── WordCardPanel ──────────────────────────────────────────────────────────
+// 하단 패널에 꽉 차게 표시되는 버전 (App.tsx 하단 섹션용)
+
+export function WordCardPanel({
+  token,
+  result,
+  status,
+  error,
+  bookmarked,
+  onBookmark,
+  onClose,
+}: WordCardProps) {
+  return (
+    <div className="flex flex-col h-full">
+      <WordCardContent
+        token={token}
+        result={result}
+        status={status}
+        error={error}
+        bookmarked={bookmarked}
+        onBookmark={onBookmark}
+        onClose={onClose}
+        scrollableBody
+      />
+    </div>
+  );
+}
+
+// ── WordCard ───────────────────────────────────────────────────────────────
+// 토큰 위에 팝업되는 인라인 카드 버전 (포인터 삼각형 + 등장 애니메이션)
+
+export function WordCard({
+  token,
+  result,
+  status,
+  error,
+  bookmarked,
+  onBookmark,
+  onClose,
+}: WordCardProps) {
+  const cardRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, [token.surface]);
+
+  return (
+    <article
+      ref={cardRef}
+      className="sy-rise mt-2 relative bg-paper-soft border border-rule rounded-md overflow-hidden"
+    >
+      <span className="absolute -top-1.5 left-5 w-[11px] h-[11px] bg-paper-soft border-l border-t border-rule rotate-45" />
+      <WordCardContent
+        token={token}
+        result={result}
+        status={status}
+        error={error}
+        bookmarked={bookmarked}
+        onBookmark={onBookmark}
+        onClose={onClose}
+      />
     </article>
   );
 }

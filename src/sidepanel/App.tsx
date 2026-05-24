@@ -3,7 +3,7 @@ import { useApp } from '../state/useApp';
 import { useWordbook } from '../hooks/useWordbook';
 import { useSplitLayout } from '../hooks/useSplitLayout';
 import { cn } from '../lib/cn';
-import { WordCard } from './components/WordCard';
+import { WordCardPanel } from './components/WordCard';
 import { Settings } from './components/Settings';
 import { SessionStrip } from './components/SessionStrip';
 import { BookmarksOver, HistoryOver } from './components/SlideOver';
@@ -175,8 +175,7 @@ export default function App() {
             className={cn('flex-1 flex flex-col bg-paper-soft overflow-hidden min-h-[80px]')}
           >
             {selectedToken && lookup.status !== 'idle' ? (
-              <WordCard
-                flat
+              <WordCardPanel
                 token={selectedToken}
                 result={lookup.entry}
                 status={lookup.status}
