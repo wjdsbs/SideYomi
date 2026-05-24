@@ -2,8 +2,7 @@ import { useCallback, useReducer, useRef } from 'react';
 import { appReducer, INITIAL_STATE } from './appReducer';
 import type { AppState } from './appReducer';
 import { tokenizerService } from '../api/TokenizerService';
-import { ChromeStorage } from '../api/ChromeStorage';
-import { GroqClient } from '../api/GroqClient';
+import type { LookupRequest, LookupResponse } from '../api/messages';
 import { JapaneseToken } from '../models/JapaneseToken';
 import { WordEntry } from '../models/WordEntry';
 
@@ -50,46 +49,31 @@ export function useApp() {
     reqIdRef.current += 1;
     const reqId = reqIdRef.current;
 
-    const apiKey = await ChromeStorage.getApiKey();
+    const prev = tokens[idx - 1];
+    const next = tokens[idx + 1];
+
+    const request: LookupRequest = {
+      type: 'LOOKUP',
+      surface: token.surface,
+      reading: token.reading ?? token.surface,
+      context: token.getContext(prev, next),
+      cacheKey: token.cacheKey,
+    };
+
+    const response = (await chrome.runtime.sendMessage(request)) as LookupResponse;
     if (reqId !== reqIdRef.current) return;
 
-    if (!apiKey) {
-      dispatch({ type: 'LOOKUP_NO_KEY' });
+    if (!response.ok) {
+      if (response.error === 'NO_KEY') {
+        dispatch({ type: 'LOOKUP_NO_KEY' });
+      } else {
+        dispatch({ type: 'LOOKUP_FAILED', error: response.error });
+      }
       return;
     }
 
-    const cache = await ChromeStorage.getWordCache();
-    if (reqId !== reqIdRef.current) return;
-
-    if (cache[token.cacheKey]) {
-      dispatch({
-        type: 'LOOKUP_DONE',
-        entry: WordEntry.fromStored(cache[token.cacheKey]),
-        token,
-        src: resolveSrc(source),
-      });
-      return;
-    }
-
-    try {
-      const prev = tokens[idx - 1];
-      const next = tokens[idx + 1];
-      const raw = await new GroqClient(apiKey).lookup(
-        token.surface,
-        token.reading ?? token.surface,
-        token.getContext(prev, next),
-      );
-      if (reqId !== reqIdRef.current) return;
-      const entry = new WordEntry(raw);
-      dispatch({ type: 'LOOKUP_DONE', entry, token, src: resolveSrc(source) });
-      ChromeStorage.setWordCache({ ...cache, [token.cacheKey]: entry.toStorable() });
-    } catch (err) {
-      if (reqId !== reqIdRef.current) return;
-      dispatch({
-        type: 'LOOKUP_FAILED',
-        error: err instanceof Error ? err.message : 'API 오류',
-      });
-    }
+    const entry = new WordEntry(response.entry);
+    dispatch({ type: 'LOOKUP_DONE', entry, token, src: resolveSrc(source) });
   }, []);
 
   const clearSession = useCallback(() => dispatch({ type: 'SESSION_CLEARED' }), []);
