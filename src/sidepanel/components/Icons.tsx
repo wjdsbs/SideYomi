@@ -3,9 +3,9 @@ function Icon({
   children,
   fill = 'none',
 }: {
-  size?: number;
+  size?: number | undefined;
   children: React.ReactNode;
-  fill?: string;
+  fill?: string | undefined;
 }) {
   return (
     <svg

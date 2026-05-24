@@ -182,8 +182,12 @@ export function HistoryOver({
   if (!open) return null;
 
   const groups = items.reduce<Record<string, HistoryItem[]>>((acc, it) => {
-    if (!acc[it.src]) acc[it.src] = [];
-    acc[it.src].push(it);
+    const group = acc[it.src];
+    if (!group) {
+      acc[it.src] = [it];
+    } else {
+      group.push(it);
+    }
     return acc;
   }, {});
 

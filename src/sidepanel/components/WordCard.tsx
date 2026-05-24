@@ -10,7 +10,7 @@ type WordCardProps = {
   token: JapaneseToken;
   result: WordEntry | null;
   status: LookupStatus;
-  error?: string;
+  error?: string | undefined;
   bookmarked: boolean;
   onBookmark: () => void;
   onClose: () => void;

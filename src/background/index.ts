@@ -11,7 +11,8 @@ async function handleLookup(req: LookupRequest): Promise<LookupResponse> {
   if (!apiKey) return { ok: false, error: 'NO_KEY' };
 
   const cache = await ChromeStorage.getWordCache();
-  if (cache[req.cacheKey]) return { ok: true, entry: cache[req.cacheKey] };
+  const cached = cache[req.cacheKey];
+  if (cached) return { ok: true, entry: cached };
 
   try {
     const entry = await new GroqClient(apiKey).lookup(req.surface, req.reading, req.context);

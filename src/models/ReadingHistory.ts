@@ -29,8 +29,12 @@ export class ReadingHistory {
 
   groupedBySrc(): Record<string, HistoryEntry[]> {
     return this.entries.reduce<Record<string, HistoryEntry[]>>((acc, entry) => {
-      if (!acc[entry.src]) acc[entry.src] = [];
-      acc[entry.src].push(entry);
+      const group = acc[entry.src];
+      if (!group) {
+        acc[entry.src] = [entry];
+      } else {
+        group.push(entry);
+      }
       return acc;
     }, {});
   }

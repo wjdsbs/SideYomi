@@ -25,7 +25,7 @@ export function useApp() {
   const reqIdRef = useRef(0);
 
   const loadText = useCallback(async (text: string, source?: { title: string; url: string }) => {
-    dispatch({ type: 'TEXT_LOADING', source });
+    dispatch(source !== undefined ? { type: 'TEXT_LOADING', source } : { type: 'TEXT_LOADING' });
     try {
       const raws = await tokenizerService.tokenize(text);
       dispatch({ type: 'TEXT_LOADED', tokens: JapaneseToken.fromRawArray(raws) });
