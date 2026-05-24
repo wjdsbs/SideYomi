@@ -1,21 +1,19 @@
 import { useState, useEffect, useRef } from 'react';
-import type kuromoji from 'kuromoji';
-import type { WordResult } from '../../lib/gemini';
-import { toHiragana, buildRomaji } from '../../lib/japanese';
+import type { JapaneseToken } from '../../models/JapaneseToken';
+import type { WordEntry } from '../../models/WordEntry';
 import { IconSpeaker, IconStar, IconStarFill, IconClose, IconPlus, IconCopy } from './Icons';
 
-type Token = kuromoji.IpadicFeatures;
 type LookupStatus = 'loading' | 'done' | 'no-key' | 'error';
 
 type Props = {
-  token: Token;
-  result: WordResult | null;
+  token: JapaneseToken;
+  result: WordEntry | null;
   status: LookupStatus;
   error?: string;
   bookmarked: boolean;
   onBookmark: () => void;
   onClose: () => void;
-  flat?: boolean; // no card frame — used in split pane
+  flat?: boolean;
 };
 
 export function SpeakerButton({ word }: { word: string }) {
@@ -163,8 +161,7 @@ export function WordCard({
   onClose,
   flat = false,
 }: Props) {
-  const reading = token.reading ? toHiragana(token.reading) : null;
-  const romaji = buildRomaji([token]);
+  const { reading, romaji } = token;
   const cardRef = useRef<HTMLElement>(null);
 
   const [toast, setToast] = useState<string | null>(null);
@@ -184,9 +181,7 @@ export function WordCard({
   };
 
   const handleCopy = async () => {
-    const text = result
-      ? `${token.surface_form} (${reading}) — ${result.meanings[0]}`
-      : token.surface_form;
+    const text = result ? result.toClipboardText(token) : token.surface;
     try {
       await navigator.clipboard.writeText(text);
     } catch {
@@ -202,7 +197,7 @@ export function WordCard({
   useEffect(() => {
     if (flat || !cardRef.current) return;
     cardRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  }, [token.surface_form, flat]);
+  }, [token.surface, flat]);
 
   return (
     <article
@@ -275,7 +270,7 @@ export function WordCard({
                 marginTop: 2,
               }}
             >
-              {token.surface_form}
+              {token.surface}
             </div>
             {result && (
               <div
@@ -304,7 +299,7 @@ export function WordCard({
             )}
           </div>
           <div style={{ display: 'flex', gap: 0, flex: '0 0 auto' }}>
-            <SpeakerButton word={token.surface_form} />
+            <SpeakerButton word={token.surface} />
             <IconBtn label="단어장에 저장" onClick={onBookmark} active={bookmarked}>
               {bookmarked ? <IconStarFill size={15} /> : <IconStar size={15} />}
             </IconBtn>

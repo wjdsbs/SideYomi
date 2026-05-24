@@ -343,17 +343,8 @@ export default function App() {
             {reader.selectedToken && lookup.status !== null ? (
               <WordCard
                 flat
-                token={reader.selectedToken.toRaw()}
-                result={
-                  lookup.entry
-                    ? {
-                        meanings: lookup.entry.meanings,
-                        pos: lookup.entry.pos,
-                        examples: lookup.entry.examples,
-                        related: lookup.entry.related,
-                      }
-                    : null
-                }
+                token={reader.selectedToken}
+                result={lookup.entry}
                 status={lookup.status}
                 error={lookup.error}
                 bookmarked={wordbook.wordbook.has(reader.selectedToken.surface)}
