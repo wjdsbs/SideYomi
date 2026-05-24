@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { IconBack, IconSearch, IconClose, IconSpeaker, IconStarFill, IconExport } from './Icons';
+import { IconBack, IconSearch, IconClose, IconStarFill, IconExport } from './Icons';
+import { SpeakerButton } from './WordCard';
 
 export type BookmarkItem = {
   word: string;
@@ -104,35 +105,6 @@ function SlideOver({
         </footer>
       )}
     </div>
-  );
-}
-
-function SpeakerBtn({ word }: { word: string }) {
-  const speak = () => {
-    const utt = new SpeechSynthesisUtterance(word);
-    utt.lang = 'ja-JP';
-    speechSynthesis.speak(utt);
-  };
-  return (
-    <button
-      type="button"
-      onClick={speak}
-      title="발음 듣기"
-      style={{
-        width: 28,
-        height: 28,
-        borderRadius: 'var(--r-sm)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        color: 'var(--ink-soft)',
-        background: 'none',
-        border: 'none',
-        cursor: 'pointer',
-      }}
-    >
-      <IconSpeaker size={14} />
-    </button>
   );
 }
 
@@ -303,7 +275,7 @@ export function BookmarksOver({
                   {formatTime(b.addedAt)}
                 </div>
               </div>
-              <SpeakerBtn word={b.word} />
+              <SpeakerButton word={b.word} />
               <button
                 type="button"
                 onClick={() => onRemove(b.word)}

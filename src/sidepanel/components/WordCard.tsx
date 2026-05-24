@@ -2,15 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import type kuromoji from 'kuromoji';
 import type { WordResult } from '../../lib/gemini';
 import { toHiragana, buildRomaji } from '../../lib/japanese';
-import {
-  IconSpeaker,
-  IconStar,
-  IconStarFill,
-  IconClose,
-  IconPlus,
-  IconCopy,
-  IconNote,
-} from './Icons';
+import { IconSpeaker, IconStar, IconStarFill, IconClose, IconPlus, IconCopy } from './Icons';
 
 type Token = kuromoji.IpadicFeatures;
 type LookupStatus = 'loading' | 'done' | 'no-key' | 'error';
@@ -26,7 +18,7 @@ type Props = {
   flat?: boolean; // no card frame — used in split pane
 };
 
-function SpeakerButton({ word }: { word: string }) {
+export function SpeakerButton({ word }: { word: string }) {
   const [playing, setPlaying] = useState(false);
 
   const speak = () => {

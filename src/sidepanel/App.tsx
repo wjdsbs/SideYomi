@@ -151,8 +151,9 @@ export default function App() {
   const [over, setOver] = useState<Over>(null);
 
   const wrapperRef = useRef<HTMLDivElement>(null);
-  const [split, setSplit] = useState(42);
+  const [split, setSplit] = useState(() => Number(localStorage.getItem('splitRatio')) || 42);
   const dragging = useRef(false);
+  const reqIdRef = useRef(0);
 
   // Load bookmarks from storage on mount
   useEffect(() => {
@@ -216,7 +217,7 @@ export default function App() {
         50,
       ),
     );
-  }, [lookupStatus, selectedIdx]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [lookupStatus, selectedIdx, wordResult, tokens, source]);
 
   const handleTokenClick = (token: Token, idx: number) => {
     if (selectedIdx === idx) {
@@ -236,7 +237,13 @@ export default function App() {
     const next = tokens[idx + 1]?.surface_form ?? '';
     const context = [prev, token.surface_form, next].filter(Boolean).join(' ');
 
+    // Stale-response guard: discard results if user clicked another token
+    reqIdRef.current += 1;
+    const reqId = reqIdRef.current;
+
     chrome.storage.local.get(['groqApiKey', 'wordCache'], ({ groqApiKey, wordCache }) => {
+      if (reqId !== reqIdRef.current) return;
+
       if (!groqApiKey) {
         setLookupStatus('no-key');
         return;
@@ -252,11 +259,13 @@ export default function App() {
       setLookupStatus('loading');
       lookupWord(token.surface_form, reading, context, groqApiKey)
         .then((result) => {
+          if (reqId !== reqIdRef.current) return;
           setWordResult(result);
           setLookupStatus('done');
           chrome.storage.local.set({ wordCache: { ...cache, [cacheKey]: result } });
         })
         .catch((err: Error) => {
+          if (reqId !== reqIdRef.current) return;
           setLookupError(err.message);
           setLookupStatus('error');
         });
@@ -309,14 +318,16 @@ export default function App() {
   const onHandleDown = (e: React.MouseEvent) => {
     dragging.current = true;
     e.preventDefault();
+    let lastPct = split;
     const onMove = (ev: MouseEvent) => {
       if (!dragging.current || !wrapperRef.current) return;
       const rect = wrapperRef.current.getBoundingClientRect();
-      const pct = Math.max(20, Math.min(75, ((ev.clientY - rect.top) / rect.height) * 100));
-      setSplit(pct);
+      lastPct = Math.max(20, Math.min(75, ((ev.clientY - rect.top) / rect.height) * 100));
+      setSplit(lastPct);
     };
     const onUp = () => {
       dragging.current = false;
+      localStorage.setItem('splitRatio', String(lastPct));
       window.removeEventListener('mousemove', onMove);
       window.removeEventListener('mouseup', onUp);
     };
