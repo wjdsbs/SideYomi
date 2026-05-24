@@ -1,8 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { useReader } from '../hooks/useReader';
-import { useWordLookup } from '../hooks/useWordLookup';
+import { useApp } from '../state/useApp';
 import { useWordbook } from '../hooks/useWordbook';
-import { useHistory } from '../hooks/useHistory';
 import { useSplitLayout } from '../hooks/useSplitLayout';
 import { WordCard } from './components/WordCard';
 import { Settings } from './components/Settings';
@@ -14,6 +12,18 @@ import { TokenFlow } from './components/TokenFlow';
 import { IconBook, IconClock, IconSettings, IconSparkle, IconStar } from './components/Icons';
 
 type Over = 'bookmarks' | 'history' | 'settings' | null;
+
+function useLocalToggle(key: string, defaultValue: boolean) {
+  const [value, setValue] = useState(() =>
+    localStorage.getItem(key) !== null ? localStorage.getItem(key) === 'true' : defaultValue,
+  );
+  const toggle = () =>
+    setValue((v) => {
+      localStorage.setItem(key, String(!v));
+      return !v;
+    });
+  return [value, toggle] as const;
+}
 
 function IconBtn({
   children,
@@ -82,75 +92,26 @@ function IconBtn({
 }
 
 export default function App() {
-  const [source, setSource] = useState<{ title: string; url: string } | null>(null);
   const [over, setOver] = useState<Over>(null);
-
-  const reader = useReader();
-  const lookup = useWordLookup();
+  const { state, loadText, selectToken, clearSession } = useApp();
   const wordbook = useWordbook();
-  const { history, pushHistory } = useHistory();
-
   const wrapperRef = useRef<HTMLDivElement>(null);
-  const layout = useSplitLayout(wrapperRef);
+  const { split, onHandleDown } = useSplitLayout(wrapperRef);
+  const [showFurigana, toggleFurigana] = useLocalToggle('showFurigana', true);
+  const [showRomaji, toggleRomaji] = useLocalToggle('showRomaji', false);
 
-  // 안정적인 콜백만 구조 분해 — useEffect deps에 직접 사용
-  const { load, selectedToken, pushSession } = reader;
-
-  // 텍스트 선택 메시지 수신
   useEffect(() => {
-    const handler = (message: { type: string; text: string; title?: string; url?: string }) => {
-      if (message.type !== 'TEXT_SELECTED') return;
-      load(message.text);
-      if (message.title || message.url) {
-        setSource({ title: message.title ?? '', url: message.url ?? '' });
-      }
+    const handler = (msg: { type: string; text: string; title?: string; url?: string }) => {
+      if (msg.type !== 'TEXT_SELECTED') return;
+      loadText(msg.text, { title: msg.title ?? '', url: msg.url ?? '' });
     };
     chrome.runtime.onMessage.addListener(handler);
     return () => chrome.runtime.onMessage.removeListener(handler);
-  }, [load]);
+  }, [loadText]);
 
-  // 조회 완료 시 히스토리 + 세션 업데이트
-  useEffect(() => {
-    if (lookup.status !== 'done' || !selectedToken) return;
-    const token = selectedToken;
-    if (token.isPunctuation) return;
-
-    const src = source?.url
-      ? (() => {
-          try {
-            return new URL(source.url).hostname;
-          } catch {
-            return source.url;
-          }
-        })()
-      : 'この画面';
-
-    pushHistory(token, src);
-    pushSession(token.surface);
-  }, [lookup.status, selectedToken, pushSession, pushHistory, source]);
-
-  const handleTokenClick = (idx: number) => {
-    const token = reader.tokens[idx];
-    if (!token) return;
-
-    if (reader.selectedIdx === idx) {
-      reader.deselectToken();
-      lookup.reset();
-      return;
-    }
-
-    reader.selectToken(idx);
-    lookup.reset();
-
-    const prev = reader.tokens[idx - 1];
-    const next = reader.tokens[idx + 1];
-    lookup.lookup(token, token.getContext(prev, next));
-  };
-
-  const handleClose = () => {
-    reader.deselectToken();
-    lookup.reset();
-  };
+  const { tokens, selectedIdx, session, history, source, lookup, readerStatus } = state;
+  const selectedToken = selectedIdx !== null ? (tokens[selectedIdx] ?? null) : null;
+  const wordCount = tokens.filter((t) => !t.isPunctuation).length;
 
   return (
     <div
@@ -216,12 +177,12 @@ export default function App() {
       {source && <SourceCrumb title={source.title} url={source.url} />}
 
       {/* 비활성 상태 */}
-      {reader.status !== 'done' && (
+      {readerStatus !== 'done' && (
         <div
           className="sy-scroll"
           style={{ flex: 1, overflowY: 'auto', padding: '16px 14px 20px' }}
         >
-          {reader.status === 'idle' && (
+          {readerStatus === 'idle' && (
             <div
               style={{
                 padding: '48px 24px',
@@ -254,14 +215,14 @@ export default function App() {
               </div>
             </div>
           )}
-          {reader.status === 'loading' && (
+          {readerStatus === 'loading' && (
             <div style={{ padding: '12px 0' }}>
               <div className="sy-skel" style={{ height: 22, width: '80%', marginBottom: 12 }} />
               <div className="sy-skel" style={{ height: 22, width: '60%', marginBottom: 12 }} />
               <div className="sy-skel" style={{ height: 22, width: '90%' }} />
             </div>
           )}
-          {reader.status === 'error' && (
+          {readerStatus === 'error' && (
             <p style={{ fontSize: 12, color: 'var(--err)', margin: 0 }}>
               분석 실패. 다시 시도해 주세요.
             </p>
@@ -270,7 +231,7 @@ export default function App() {
       )}
 
       {/* Split 레이아웃 */}
-      {reader.status === 'done' && (
+      {readerStatus === 'done' && (
         <div
           ref={wrapperRef}
           style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}
@@ -278,7 +239,7 @@ export default function App() {
           {/* 상단: 툴바 + 토큰 */}
           <section
             style={{
-              height: `${layout.split}%`,
+              height: `${split}%`,
               minHeight: 80,
               display: 'flex',
               flexDirection: 'column',
@@ -286,22 +247,22 @@ export default function App() {
             }}
           >
             <Toolbar
-              showFurigana={reader.showFurigana}
-              showRomaji={reader.showRomaji}
-              wordCount={reader.wordCount}
-              onToggleFurigana={reader.toggleFurigana}
-              onToggleRomaji={reader.toggleRomaji}
+              showFurigana={showFurigana}
+              showRomaji={showRomaji}
+              wordCount={wordCount}
+              onToggleFurigana={toggleFurigana}
+              onToggleRomaji={toggleRomaji}
             />
             <div
               className="sy-scroll"
               style={{ flex: 1, overflowY: 'auto', padding: '12px 14px 10px' }}
             >
               <TokenFlow
-                tokens={reader.tokens}
-                selectedIdx={reader.selectedIdx}
-                showFurigana={reader.showFurigana}
-                showRomaji={reader.showRomaji}
-                onTokenClick={handleTokenClick}
+                tokens={tokens}
+                selectedIdx={selectedIdx}
+                showFurigana={showFurigana}
+                showRomaji={showRomaji}
+                onTokenClick={selectToken}
               />
             </div>
           </section>
@@ -309,7 +270,7 @@ export default function App() {
           {/* 드래그 핸들 */}
           <button
             type="button"
-            onMouseDown={layout.onHandleDown}
+            onMouseDown={onHandleDown}
             aria-label="분할 조절"
             style={{
               height: 8,
@@ -340,19 +301,16 @@ export default function App() {
               overflow: 'hidden',
             }}
           >
-            {reader.selectedToken && lookup.status !== null ? (
+            {selectedToken && lookup.status !== 'idle' ? (
               <WordCard
                 flat
-                token={reader.selectedToken}
+                token={selectedToken}
                 result={lookup.entry}
                 status={lookup.status}
                 error={lookup.error}
-                bookmarked={wordbook.wordbook.has(reader.selectedToken.surface)}
-                onBookmark={() => {
-                  if (reader.selectedToken)
-                    wordbook.toggleBookmark(reader.selectedToken, lookup.entry);
-                }}
-                onClose={handleClose}
+                bookmarked={wordbook.wordbook.has(selectedToken.surface)}
+                onBookmark={() => wordbook.toggleBookmark(selectedToken, lookup.entry)}
+                onClose={() => selectToken(selectedIdx!)}
               />
             ) : (
               <div
@@ -378,15 +336,15 @@ export default function App() {
 
       {/* 세션 스트립 */}
       <SessionStrip
-        session={reader.session.toList()}
+        session={session.toList()}
         onJump={(word) => {
-          const idx = reader.tokens.findIndex((t) => t.surface === word);
+          const idx = tokens.findIndex((t) => t.surface === word);
           if (idx >= 0) {
             setOver(null);
-            handleTokenClick(idx);
+            selectToken(idx);
           }
         }}
-        onClear={reader.clearSession}
+        onClear={clearSession}
       />
 
       {/* 슬라이드오버 */}
