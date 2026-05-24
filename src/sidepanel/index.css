@@ -86,3 +86,18 @@
 .sy-slide   { animation: sy-slide  .26s cubic-bezier(.2,.7,.3,1) both; }
 .sy-toast   { animation: sy-toast  1.8s ease-out forwards; }
 .sy-skel    { background: var(--paper-sunk); animation: sy-pulse 1.4s ease-in-out infinite; border-radius: var(--r-xs); }
+
+@layer components {
+  /* 아이콘 버튼 기본형 — 크기/모양만. 색상은 cn()으로 조합 */
+  .btn-icon {
+    @apply flex items-center justify-center border-0 cursor-pointer transition-all duration-150 bg-transparent;
+  }
+  /* 섹션 레이블 (뜻/예문/관련어 등의 소제목) */
+  .section-label {
+    @apply text-[10px] uppercase tracking-[0.12em] text-ink-mute font-semibold mb-1.5;
+  }
+  /* 품사/태그 칩 */
+  .chip {
+    @apply text-[10px] px-1.5 py-px rounded-full border font-medium text-ink-soft bg-paper-sunk border-rule;
+  }
+}

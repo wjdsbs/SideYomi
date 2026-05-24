@@ -9,62 +9,17 @@ type Props = {
 export function SessionStrip({ session, onJump, onClear }: Props) {
   if (session.length === 0) return null;
   return (
-    <div
-      style={{
-        borderTop: '1px solid var(--rule)',
-        background: 'var(--paper-soft)',
-        padding: '7px 12px',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 8,
-        flex: '0 0 auto',
-      }}
-    >
-      <span
-        style={{
-          fontSize: 9,
-          textTransform: 'uppercase',
-          letterSpacing: '0.12em',
-          color: 'var(--ink-mute)',
-          fontWeight: 600,
-          flex: '0 0 auto',
-        }}
-      >
+    <div className="border-t border-rule bg-paper-soft px-3 py-[7px] flex items-center gap-2 flex-none">
+      <span className="text-[9px] uppercase tracking-[0.12em] text-ink-mute font-semibold flex-none">
         이 세션
       </span>
-      <div
-        className="sy-scroll"
-        style={{
-          flex: 1,
-          display: 'flex',
-          gap: 4,
-          overflowX: 'auto',
-          minWidth: 0,
-        }}
-      >
+      <div className="sy-scroll flex-1 flex gap-1 overflow-x-auto min-w-0">
         {session.map((w) => (
           <button
             key={w}
             type="button"
             onClick={() => onJump(w)}
-            style={{
-              flex: '0 0 auto',
-              padding: '2px 8px',
-              borderRadius: 999,
-              border: '1px solid var(--rule)',
-              background: 'var(--paper)',
-              fontFamily: 'var(--font-jp)',
-              fontSize: 12,
-              color: 'var(--ink-soft)',
-              cursor: 'pointer',
-              transition: 'all .12s',
-            }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLElement).style.background = 'var(--paper-sunk)';
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLElement).style.background = 'var(--paper)';
-            }}
+            className="flex-none px-2 py-[2px] rounded-full border border-rule bg-paper font-jp text-xs text-ink-soft cursor-pointer transition-all duration-[120ms] hover:bg-paper-sunk"
           >
             {w}
           </button>
@@ -74,15 +29,7 @@ export function SessionStrip({ session, onJump, onClear }: Props) {
         type="button"
         onClick={onClear}
         title="세션 비우기"
-        style={{
-          color: 'var(--ink-faint)',
-          padding: 4,
-          background: 'none',
-          border: 'none',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-        }}
+        className="text-ink-faint p-1 bg-transparent border-0 cursor-pointer flex items-center"
       >
         <IconClose size={11} />
       </button>

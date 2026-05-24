@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { cn } from '../../lib/cn';
 import { IconBack, IconSearch, IconClose, IconStarFill, IconExport } from './Icons';
 import { SpeakerButton } from './WordCard';
 
@@ -42,65 +43,22 @@ function SlideOver({
   children: React.ReactNode;
 }) {
   return (
-    <div
-      className="sy-slide"
-      style={{
-        position: 'absolute',
-        inset: 0,
-        background: 'var(--paper)',
-        display: 'flex',
-        flexDirection: 'column',
-        zIndex: 10,
-      }}
-    >
-      <header
-        style={{
-          padding: '12px 14px 10px',
-          borderBottom: '1px solid var(--rule)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 10,
-          flex: '0 0 auto',
-        }}
-      >
+    <div className="sy-slide absolute inset-0 bg-paper flex flex-col z-10">
+      <header className="px-3.5 pt-3 pb-2.5 border-b border-rule flex items-center gap-2.5 flex-none">
         <button
           type="button"
           onClick={onClose}
           title="뒤로"
-          style={{
-            width: 28,
-            height: 28,
-            borderRadius: 'var(--r-sm)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'var(--ink-soft)',
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-          }}
+          className="btn-icon w-7 h-7 rounded-sm text-ink-soft"
         >
           <IconBack size={16} />
         </button>
-        <h2 style={{ margin: 0, fontSize: 13.5, fontWeight: 600, color: 'var(--ink)', flex: 1 }}>
-          {title}
-        </h2>
-        {count && <span style={{ fontSize: 11, color: 'var(--ink-faint)' }}>{count}</span>}
+        <h2 className="m-0 text-[13.5px] font-semibold text-ink flex-1">{title}</h2>
+        {count && <span className="text-[11px] text-ink-faint">{count}</span>}
       </header>
-      <div className="sy-scroll" style={{ flex: 1, overflowY: 'auto' }}>
-        {children}
-      </div>
+      <div className="sy-scroll flex-1 overflow-y-auto">{children}</div>
       {footer && (
-        <footer
-          style={{
-            borderTop: '1px solid var(--rule)',
-            padding: '8px 12px',
-            display: 'flex',
-            gap: 6,
-            background: 'var(--paper-soft)',
-            flex: '0 0 auto',
-          }}
-        >
+        <footer className="border-t border-rule px-3 py-2 flex gap-1.5 bg-paper-soft flex-none">
           {footer}
         </footer>
       )}
@@ -146,19 +104,7 @@ export function BookmarksOver({
         <button
           type="button"
           onClick={handleExport}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 6,
-            padding: '6px 10px',
-            borderRadius: 'var(--r-sm)',
-            fontSize: 11.5,
-            border: '1px solid var(--rule)',
-            color: 'var(--ink-soft)',
-            background: 'var(--paper)',
-            cursor: 'pointer',
-            fontFamily: 'var(--font-ui)',
-          }}
+          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-sm text-[11.5px] border border-rule text-ink-soft bg-paper cursor-pointer font-ui"
         >
           <IconExport size={12} />
           Anki 내보내기
@@ -166,45 +112,17 @@ export function BookmarksOver({
       }
     >
       {/* search */}
-      <div style={{ padding: '10px 12px', borderBottom: '1px solid var(--rule-soft)' }}>
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            background: 'var(--paper-soft)',
-            border: '1px solid var(--rule)',
-            borderRadius: 8,
-            padding: '6px 10px',
-          }}
-        >
+      <div className="px-3 py-2.5 border-b border-rule-soft">
+        <div className="flex items-center gap-1.5 bg-paper-soft border border-rule rounded-lg px-2.5 py-1.5">
           <IconSearch size={13} />
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="단어 · 뜻 검색"
-            style={{
-              flex: 1,
-              background: 'transparent',
-              border: 'none',
-              outline: 'none',
-              fontFamily: 'var(--font-ui)',
-              color: 'var(--ink)',
-              fontSize: 12,
-            }}
+            className="flex-1 bg-transparent border-0 outline-none font-ui text-ink text-xs"
           />
           {q && (
-            <button
-              type="button"
-              onClick={() => setQ('')}
-              style={{
-                color: 'var(--ink-mute)',
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                display: 'flex',
-              }}
-            >
+            <button type="button" onClick={() => setQ('')} className={cn('btn-icon text-ink-mute')}>
               <IconClose size={12} />
             </button>
           )}
@@ -212,86 +130,35 @@ export function BookmarksOver({
       </div>
 
       {filtered.length === 0 ? (
-        <div
-          style={{
-            padding: '40px 24px',
-            textAlign: 'center',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: 8,
-          }}
-        >
-          <div style={{ fontSize: 12.5, color: 'var(--ink-soft)' }}>
+        <div className="py-10 px-6 text-center flex flex-col items-center gap-2">
+          <div className="text-[12.5px] text-ink-soft">
             {q ? '검색 결과가 없어요' : '저장된 단어가 없어요'}
           </div>
           {!q && (
-            <div style={{ fontSize: 11, color: 'var(--ink-faint)' }}>
-              단어 카드의 ★ 아이콘으로 저장하세요.
-            </div>
+            <div className="text-[11px] text-ink-faint">단어 카드의 ★ 아이콘으로 저장하세요.</div>
           )}
         </div>
       ) : (
-        <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+        <ul className="list-none m-0 p-0">
           {filtered.map((b) => (
             <li
               key={b.word}
-              style={{
-                padding: '10px 14px',
-                borderBottom: '1px solid var(--rule-soft)',
-                display: 'flex',
-                gap: 8,
-                alignItems: 'flex-start',
-              }}
+              className="px-3.5 py-2.5 border-b border-rule-soft flex gap-2 items-start"
             >
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-                  <span
-                    style={{
-                      fontFamily: 'var(--font-jp)',
-                      fontSize: 15.5,
-                      fontWeight: 500,
-                      color: 'var(--ink)',
-                    }}
-                  >
-                    {b.word}
-                  </span>
-                  <span
-                    style={{
-                      fontFamily: 'var(--font-jp-sans)',
-                      fontSize: 11,
-                      color: 'var(--ink-mute)',
-                    }}
-                  >
-                    {b.reading}
-                  </span>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-baseline gap-2">
+                  <span className="font-jp text-[15.5px] font-medium text-ink">{b.word}</span>
+                  <span className="font-jp-sans text-[11px] text-ink-mute">{b.reading}</span>
                 </div>
-                <div
-                  style={{ fontSize: 12, color: 'var(--ink-soft)', marginTop: 2, lineHeight: 1.45 }}
-                >
-                  {b.meaning}
-                </div>
-                <div style={{ fontSize: 10, color: 'var(--ink-faint)', marginTop: 3 }}>
-                  {formatTime(b.addedAt)}
-                </div>
+                <div className="text-xs text-ink-soft mt-0.5 leading-[1.45]">{b.meaning}</div>
+                <div className="text-[10px] text-ink-faint mt-0.5">{formatTime(b.addedAt)}</div>
               </div>
               <SpeakerButton word={b.word} />
               <button
                 type="button"
                 onClick={() => onRemove(b.word)}
                 title="제거"
-                style={{
-                  width: 28,
-                  height: 28,
-                  borderRadius: 'var(--r-sm)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'var(--accent)',
-                  background: 'var(--accent-soft)',
-                  border: 'none',
-                  cursor: 'pointer',
-                }}
+                className="btn-icon w-7 h-7 rounded-sm text-accent bg-accent-soft"
               >
                 <IconStarFill size={14} />
               </button>
@@ -323,59 +190,25 @@ export function HistoryOver({
   return (
     <SlideOver title="최근 본 단어" count={`${items.length}개`} onClose={onClose}>
       {items.length === 0 ? (
-        <div style={{ padding: '40px 24px', textAlign: 'center' }}>
-          <div style={{ fontSize: 12.5, color: 'var(--ink-soft)' }}>아직 본 단어가 없어요</div>
+        <div className="py-10 px-6 text-center">
+          <div className="text-[12.5px] text-ink-soft">아직 본 단어가 없어요</div>
         </div>
       ) : (
         Object.entries(groups).map(([src, list]) => (
           <div key={src}>
-            <div
-              style={{
-                padding: '10px 14px 6px',
-                fontSize: 10,
-                color: 'var(--ink-mute)',
-                letterSpacing: '0.06em',
-                textTransform: 'uppercase',
-                fontWeight: 600,
-                background: 'var(--paper-soft)',
-              }}
-            >
+            <div className="px-3.5 pt-2.5 pb-1.5 text-[10px] text-ink-mute tracking-[0.06em] uppercase font-semibold bg-paper-soft">
               {src}
             </div>
             {list.map((h) => (
               <div
                 key={`${h.word}-${h.src}-${h.time}`}
-                style={{
-                  width: '100%',
-                  padding: '9px 14px',
-                  display: 'flex',
-                  alignItems: 'baseline',
-                  gap: 10,
-                  borderBottom: '1px solid var(--rule-soft)',
-                }}
+                className="w-full px-3.5 py-[9px] flex items-baseline gap-2.5 border-b border-rule-soft"
               >
-                <span
-                  style={{
-                    fontFamily: 'var(--font-jp)',
-                    fontSize: 14.5,
-                    fontWeight: 500,
-                    minWidth: 60,
-                    color: 'var(--ink)',
-                  }}
-                >
+                <span className="font-jp text-[14.5px] font-medium min-w-[60px] text-ink">
                   {h.word}
                 </span>
-                <span
-                  style={{
-                    fontFamily: 'var(--font-jp-sans)',
-                    fontSize: 11,
-                    color: 'var(--ink-mute)',
-                    flex: 1,
-                  }}
-                >
-                  {h.reading}
-                </span>
-                <span style={{ fontSize: 10.5, color: 'var(--ink-faint)' }}>{h.time}</span>
+                <span className="font-jp-sans text-[11px] text-ink-mute flex-1">{h.reading}</span>
+                <span className="text-[10.5px] text-ink-faint">{h.time}</span>
               </div>
             ))}
           </div>

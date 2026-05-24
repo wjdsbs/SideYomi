@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import type { JapaneseToken } from '../../models/JapaneseToken';
 import type { WordEntry } from '../../models/WordEntry';
+import { cn } from '../../lib/cn';
 import { IconSpeaker, IconStar, IconStarFill, IconClose, IconPlus, IconCopy } from './Icons';
 
 type LookupStatus = 'loading' | 'done' | 'no-key' | 'error';
@@ -34,31 +35,16 @@ export function SpeakerButton({ word }: { word: string }) {
       onClick={speak}
       title="발음 듣기"
       aria-label="발음 듣기"
-      style={{
-        width: 28,
-        height: 28,
-        borderRadius: 'var(--r-sm)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        color: playing ? 'var(--accent)' : 'var(--ink-soft)',
-        background: playing ? 'var(--accent-soft)' : 'transparent',
-        border: 'none',
-        cursor: 'pointer',
-        position: 'relative',
-        transition: 'all .15s',
-      }}
+      className={cn(
+        'btn-icon w-7 h-7 rounded-sm relative',
+        playing ? 'text-accent bg-accent-soft' : 'text-ink-soft',
+      )}
     >
       <IconSpeaker size={15} />
       {playing && (
         <span
-          style={{
-            position: 'absolute',
-            inset: 0,
-            borderRadius: 'var(--r-sm)',
-            border: '1.5px solid var(--accent)',
-            animation: 'sy-tts 1.2s ease-out infinite',
-          }}
+          className="absolute inset-0 rounded-sm border-[1.5px] border-accent"
+          style={{ animation: 'sy-tts 1.2s ease-out infinite' }}
         />
       )}
     </button>
@@ -82,19 +68,10 @@ function IconBtn({
       onClick={onClick}
       title={label}
       aria-label={label}
-      style={{
-        width: 28,
-        height: 28,
-        borderRadius: 'var(--r-sm)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        color: active ? 'var(--accent)' : 'var(--ink-soft)',
-        background: active ? 'var(--accent-soft)' : 'transparent',
-        border: 'none',
-        cursor: 'pointer',
-        transition: 'all .15s',
-      }}
+      className={cn(
+        'btn-icon w-7 h-7 rounded-sm',
+        active ? 'text-accent bg-accent-soft' : 'text-ink-soft',
+      )}
     >
       {children}
     </button>
@@ -116,30 +93,12 @@ function FooterBtn({
     <button
       type="button"
       onClick={onClick}
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 5,
-        padding: '5px 8px',
-        borderRadius: 'var(--r-sm)',
-        fontSize: 11.5,
-        color: subtle ? 'var(--ink-mute)' : 'var(--ink-soft)',
-        background: 'transparent',
-        border: 'none',
-        cursor: 'pointer',
-        transition: 'background .15s, color .15s',
-        fontFamily: 'var(--font-ui)',
-      }}
-      onMouseEnter={(e) => {
-        (e.currentTarget as HTMLElement).style.background = 'var(--paper-sunk)';
-        (e.currentTarget as HTMLElement).style.color = 'var(--ink)';
-      }}
-      onMouseLeave={(e) => {
-        (e.currentTarget as HTMLElement).style.background = 'transparent';
-        (e.currentTarget as HTMLElement).style.color = subtle
-          ? 'var(--ink-mute)'
-          : 'var(--ink-soft)';
-      }}
+      className={cn(
+        'inline-flex items-center gap-1.5 px-2 py-1 rounded-sm text-[11.5px]',
+        'bg-transparent border-0 cursor-pointer transition-colors duration-150 font-ui',
+        'hover:bg-paper-sunk hover:text-ink',
+        subtle ? 'text-ink-mute' : 'text-ink-soft',
+      )}
     >
       {icon}
       {children}
@@ -202,103 +161,37 @@ export function WordCard({
   return (
     <article
       ref={cardRef}
-      className={flat ? undefined : 'sy-rise'}
-      style={
+      className={cn(
         flat
-          ? { display: 'flex', flexDirection: 'column', height: '100%' }
-          : {
-              marginTop: 8,
-              position: 'relative',
-              background: 'var(--paper-soft)',
-              border: '1px solid var(--rule)',
-              borderRadius: 'var(--r-md)',
-              overflow: 'hidden',
-            }
-      }
+          ? 'flex flex-col h-full'
+          : 'sy-rise mt-2 relative bg-paper-soft border border-rule rounded-md overflow-hidden',
+      )}
     >
       {/* pointer triangle — inline mode only */}
       {!flat && (
-        <span
-          style={{
-            position: 'absolute',
-            top: -6,
-            left: 20,
-            width: 11,
-            height: 11,
-            background: 'var(--paper-soft)',
-            borderLeft: '1px solid var(--rule)',
-            borderTop: '1px solid var(--rule)',
-            transform: 'rotate(45deg)',
-          }}
-        />
+        <span className="absolute -top-1.5 left-5 w-[11px] h-[11px] bg-paper-soft border-l border-t border-rule rotate-45" />
       )}
 
       {/* header */}
-      <header style={{ padding: flat ? '12px 14px 8px' : '14px 14px 10px', flex: '0 0 auto' }}>
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'flex-start',
-            justifyContent: 'space-between',
-            gap: 8,
-          }}
-        >
-          <div style={{ minWidth: 0 }}>
+      <header className={cn('flex-none', flat ? 'px-3.5 pt-3 pb-2' : 'px-3.5 pt-3.5 pb-2.5')}>
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
             {reading && (
-              <div
-                style={{
-                  fontFamily: 'var(--font-jp-sans)',
-                  fontSize: 10.5,
-                  color: 'var(--ink-faint)',
-                  letterSpacing: '0.04em',
-                  marginBottom: 2,
-                }}
-              >
+              <div className="font-jp-sans text-[10.5px] text-ink-faint tracking-[0.04em] mb-0.5">
                 {reading}
-                {romaji && (
-                  <span style={{ fontFamily: 'var(--font-mono)', marginLeft: 6 }}>· {romaji}</span>
-                )}
+                {romaji && <span className="font-mono ml-1.5">· {romaji}</span>}
               </div>
             )}
-            <div
-              style={{
-                fontFamily: 'var(--font-jp)',
-                fontSize: 24,
-                fontWeight: 500,
-                color: 'var(--ink)',
-                lineHeight: 1.15,
-                marginTop: 2,
-              }}
-            >
+            <div className="font-jp text-2xl font-medium text-ink leading-[1.15] mt-0.5">
               {token.surface}
             </div>
             {result && (
-              <div
-                style={{
-                  display: 'flex',
-                  gap: 5,
-                  marginTop: 6,
-                  alignItems: 'center',
-                  flexWrap: 'wrap',
-                }}
-              >
-                <span
-                  style={{
-                    fontSize: 10,
-                    padding: '1px 6px',
-                    borderRadius: 999,
-                    color: 'var(--ink-soft)',
-                    background: 'var(--paper-sunk)',
-                    border: '1px solid var(--rule)',
-                    fontWeight: 500,
-                  }}
-                >
-                  {result.pos}
-                </span>
+              <div className="flex gap-1.5 mt-1.5 items-center flex-wrap">
+                <span className="chip">{result.pos}</span>
               </div>
             )}
           </div>
-          <div style={{ display: 'flex', gap: 0, flex: '0 0 auto' }}>
+          <div className="flex gap-0 flex-none">
             <SpeakerButton word={token.surface} />
             <IconBtn label="단어장에 저장" onClick={onBookmark} active={bookmarked}>
               {bookmarked ? <IconStarFill size={15} /> : <IconStar size={15} />}
@@ -311,14 +204,7 @@ export function WordCard({
       </header>
 
       {/* body */}
-      <div
-        className={flat ? 'sy-scroll' : undefined}
-        style={{
-          padding: '0 14px 12px',
-          flex: flat ? 1 : undefined,
-          overflowY: flat ? 'auto' : undefined,
-        }}
-      >
+      <div className={cn('px-3.5 pb-3', flat && 'sy-scroll flex-1 overflow-y-auto')}>
         {status === 'loading' && (
           <div>
             <Skel w="50%" h={14} />
@@ -328,44 +214,23 @@ export function WordCard({
         )}
 
         {status === 'no-key' && (
-          <p style={{ fontSize: 12, color: 'var(--ink-mute)', margin: 0 }}>
+          <p className="text-xs text-ink-mute m-0">
             설정에서 Groq API 키를 입력하면 단어 뜻을 볼 수 있어요.
           </p>
         )}
 
         {status === 'error' && (
-          <p style={{ fontSize: 12, color: 'var(--err)', margin: 0 }}>
-            {error ?? 'API 오류가 발생했어요.'}
-          </p>
+          <p className="text-xs text-err m-0">{error ?? 'API 오류가 발생했어요.'}</p>
         )}
 
         {status === 'done' && result && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div className="flex flex-col gap-3.5">
             {/* meanings */}
             <div>
-              <div
-                style={{
-                  fontSize: 10,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.12em',
-                  color: 'var(--ink-mute)',
-                  fontWeight: 600,
-                  marginBottom: 6,
-                }}
-              >
-                뜻
-              </div>
-              <ol
-                style={{
-                  margin: 0,
-                  paddingLeft: 18,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 4,
-                }}
-              >
+              <div className="section-label">뜻</div>
+              <ol className="m-0 pl-[18px] flex flex-col gap-1">
                 {result.meanings.map((m) => (
-                  <li key={m} style={{ color: 'var(--ink)', fontSize: 13.5, lineHeight: 1.55 }}>
+                  <li key={m} className="text-ink text-[13.5px] leading-[1.55]">
                     {m}
                   </li>
                 ))}
@@ -375,37 +240,12 @@ export function WordCard({
             {/* examples */}
             {result.examples && result.examples.length > 0 && (
               <div>
-                <div
-                  style={{
-                    fontSize: 10,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.12em',
-                    color: 'var(--ink-mute)',
-                    fontWeight: 600,
-                    marginBottom: 6,
-                  }}
-                >
-                  예문
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div className="section-label">예문</div>
+                <div className="flex flex-col gap-2">
                   {result.examples.map((ex) => (
-                    <div
-                      key={ex.jp}
-                      style={{ borderLeft: '2px solid var(--rule)', paddingLeft: 10 }}
-                    >
-                      <div
-                        style={{
-                          fontFamily: 'var(--font-jp)',
-                          fontSize: 13,
-                          color: 'var(--ink)',
-                          lineHeight: 1.65,
-                        }}
-                      >
-                        {ex.jp}
-                      </div>
-                      <div style={{ fontSize: 11.5, color: 'var(--ink-mute)', marginTop: 2 }}>
-                        {ex.kr}
-                      </div>
+                    <div key={ex.jp} className="border-l-2 border-rule pl-2.5">
+                      <div className="font-jp text-[13px] text-ink leading-[1.65]">{ex.jp}</div>
+                      <div className="text-[11.5px] text-ink-mute mt-0.5">{ex.kr}</div>
                     </div>
                   ))}
                 </div>
@@ -415,31 +255,12 @@ export function WordCard({
             {/* related */}
             {result.related && result.related.length > 0 && (
               <div>
-                <div
-                  style={{
-                    fontSize: 10,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.12em',
-                    color: 'var(--ink-mute)',
-                    fontWeight: 600,
-                    marginBottom: 6,
-                  }}
-                >
-                  관련어
-                </div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                <div className="section-label">관련어</div>
+                <div className="flex flex-wrap gap-1.5">
                   {result.related.map((r) => (
                     <span
                       key={r}
-                      style={{
-                        fontFamily: 'var(--font-jp-sans)',
-                        fontSize: 12,
-                        padding: '3px 8px',
-                        borderRadius: 999,
-                        background: 'var(--paper-sunk)',
-                        color: 'var(--ink-soft)',
-                        border: '1px solid var(--rule-soft)',
-                      }}
+                      className="font-jp-sans text-xs px-2 py-[3px] rounded-full bg-paper-sunk text-ink-soft border border-rule-soft"
                     >
                       {r}
                     </span>
@@ -453,40 +274,17 @@ export function WordCard({
 
       {/* footer */}
       {status === 'done' && result && (
-        <footer
-          style={{
-            display: 'flex',
-            gap: 2,
-            padding: '6px 8px',
-            borderTop: '1px solid var(--rule-soft)',
-            background: 'var(--paper)',
-            position: 'relative',
-          }}
-        >
+        <footer className="flex gap-0.5 px-2 py-1.5 border-t border-rule-soft bg-paper relative flex-none">
           <FooterBtn icon={<IconPlus size={13} />} onClick={handleAnki}>
             Anki에 추가
           </FooterBtn>
           <FooterBtn icon={<IconCopy size={12} />} onClick={handleCopy}>
             복사
           </FooterBtn>
-          <div style={{ flex: 1 }} />
+          <div className="flex-1" />
 
           {toast && (
-            <span
-              className="sy-toast"
-              style={{
-                position: 'absolute',
-                bottom: 'calc(100% + 4px)',
-                left: '50%',
-                background: 'var(--ink)',
-                color: 'var(--paper)',
-                fontSize: 10.5,
-                padding: '4px 10px',
-                borderRadius: 999,
-                whiteSpace: 'nowrap',
-                pointerEvents: 'none',
-              }}
-            >
+            <span className="sy-toast absolute bottom-[calc(100%+4px)] left-1/2 bg-ink text-paper text-[10.5px] px-2.5 py-1 rounded-full whitespace-nowrap pointer-events-none">
               {toast}
             </span>
           )}

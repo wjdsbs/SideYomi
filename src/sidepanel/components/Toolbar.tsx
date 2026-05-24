@@ -1,3 +1,5 @@
+import { cn } from '../../lib/cn';
+
 type Props = {
   showFurigana: boolean;
   showRomaji: boolean;
@@ -21,21 +23,12 @@ function ToggleChip({
     <button
       type="button"
       onClick={onClick}
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 4,
-        fontSize: 11,
-        padding: '3px 9px',
-        borderRadius: 999,
-        color: active ? 'var(--accent)' : 'var(--ink-mute)',
-        background: active ? 'var(--accent-soft)' : 'transparent',
-        border: `1px solid ${active ? 'var(--accent-line)' : 'var(--rule)'}`,
-        fontWeight: 500,
-        cursor: 'pointer',
-        transition: 'all .15s',
-        fontFamily: 'var(--font-ui)',
-      }}
+      className={cn(
+        'inline-flex items-center gap-1 text-[11px] px-[9px] py-[3px] rounded-full font-medium cursor-pointer transition-all duration-150 font-ui border',
+        active
+          ? 'text-accent bg-accent-soft border-accent-line'
+          : 'text-ink-mute bg-transparent border-rule',
+      )}
     >
       {icon}
       {label}
@@ -51,30 +44,21 @@ export function Toolbar({
   onToggleRomaji,
 }: Props) {
   return (
-    <div
-      style={{
-        display: 'flex',
-        gap: 6,
-        padding: '6px 12px',
-        alignItems: 'center',
-        borderBottom: '1px solid var(--rule-soft)',
-        flex: '0 0 auto',
-      }}
-    >
+    <div className="flex gap-1.5 px-3 py-1.5 items-center border-b border-rule-soft flex-none">
       <ToggleChip
         label="후리가나"
         active={showFurigana}
         onClick={onToggleFurigana}
-        icon={<span style={{ fontFamily: 'var(--font-jp-sans)', fontSize: 9 }}>ふ</span>}
+        icon={<span className="font-jp-sans text-[9px]">ふ</span>}
       />
       <ToggleChip
         label="로마자"
         active={showRomaji}
         onClick={onToggleRomaji}
-        icon={<span style={{ fontFamily: 'var(--font-mono)', fontSize: 9 }}>A</span>}
+        icon={<span className="font-mono text-[9px]">A</span>}
       />
-      <div style={{ flex: 1 }} />
-      <span style={{ fontSize: 10.5, color: 'var(--ink-faint)' }}>{wordCount}어</span>
+      <div className="flex-1" />
+      <span className="text-[10.5px] text-ink-faint">{wordCount}어</span>
     </div>
   );
 }

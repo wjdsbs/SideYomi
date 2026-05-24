@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useApp } from '../state/useApp';
 import { useWordbook } from '../hooks/useWordbook';
 import { useSplitLayout } from '../hooks/useSplitLayout';
+import { cn } from '../lib/cn';
 import { WordCard } from './components/WordCard';
 import { Settings } from './components/Settings';
 import { SessionStrip } from './components/SessionStrip';
@@ -42,48 +43,11 @@ function IconBtn({
       onClick={onClick}
       title={label}
       aria-label={label}
-      style={{
-        width: 30,
-        height: 30,
-        borderRadius: 'var(--r-sm)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        color: 'var(--ink-soft)',
-        background: 'transparent',
-        border: 'none',
-        cursor: 'pointer',
-        position: 'relative',
-        transition: 'background .12s, color .12s',
-      }}
-      onMouseEnter={(e) => {
-        (e.currentTarget as HTMLElement).style.background = 'var(--paper-sunk)';
-      }}
-      onMouseLeave={(e) => {
-        (e.currentTarget as HTMLElement).style.background = 'transparent';
-      }}
+      className="btn-icon w-[30px] h-[30px] rounded-sm text-ink-soft hover:bg-paper-sunk relative"
     >
       {children}
       {badge !== undefined && badge > 0 && (
-        <span
-          style={{
-            position: 'absolute',
-            top: 2,
-            right: 2,
-            background: 'var(--accent)',
-            color: 'white',
-            fontSize: 8.5,
-            padding: '0 4px',
-            borderRadius: 999,
-            fontWeight: 600,
-            minWidth: 12,
-            height: 12,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            lineHeight: 1,
-          }}
-        >
+        <span className="absolute top-0.5 right-0.5 bg-accent text-white text-[8.5px] px-1 rounded-full font-semibold min-w-3 h-3 flex items-center justify-center leading-none">
           {badge}
         </span>
       )}
@@ -114,49 +78,14 @@ export default function App() {
   const wordCount = tokens.filter((t) => !t.isPunctuation).length;
 
   return (
-    <div
-      style={{
-        fontFamily: 'var(--font-ui)',
-        color: 'var(--ink)',
-        background: 'var(--paper)',
-        fontSize: 13,
-        height: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        position: 'relative',
-        overflow: 'hidden',
-        WebkitFontSmoothing: 'antialiased',
-      }}
-    >
+    <div className="font-ui text-ink bg-paper text-[13px] h-screen flex flex-col relative overflow-hidden antialiased">
       {/* 헤더 */}
-      <header
-        style={{
-          padding: '11px 12px 9px',
-          borderBottom: '1px solid var(--rule)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: 8,
-          background: 'var(--paper)',
-          flex: '0 0 auto',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-          <span
-            style={{
-              fontWeight: 600,
-              fontSize: 13.5,
-              letterSpacing: '-0.01em',
-              color: 'var(--ink)',
-            }}
-          >
-            SideYomi
-          </span>
-          <span style={{ fontFamily: 'var(--font-jp)', fontSize: 11, color: 'var(--ink-faint)' }}>
-            側読
-          </span>
+      <header className="px-3 pt-[11px] pb-[9px] border-b border-rule flex items-center justify-between gap-2 bg-paper flex-none">
+        <div className="flex items-baseline gap-2">
+          <span className="font-semibold text-[13.5px] tracking-[-0.01em] text-ink">SideYomi</span>
+          <span className="font-jp text-[11px] text-ink-faint">側読</span>
         </div>
-        <div style={{ display: 'flex', gap: 2 }}>
+        <div className="flex gap-0.5">
           <IconBtn
             label="단어장"
             onClick={() => setOver('bookmarks')}
@@ -178,73 +107,40 @@ export default function App() {
 
       {/* 비활성 상태 */}
       {readerStatus !== 'done' && (
-        <div
-          className="sy-scroll"
-          style={{ flex: 1, overflowY: 'auto', padding: '16px 14px 20px' }}
-        >
+        <div className="sy-scroll flex-1 overflow-y-auto px-3.5 py-5">
           {readerStatus === 'idle' && (
-            <div
-              style={{
-                padding: '48px 24px',
-                textAlign: 'center',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: 10,
-              }}
-            >
-              <div
-                style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: '50%',
-                  border: '1px solid var(--rule)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'var(--ink-faint)',
-                }}
-              >
+            <div className="py-12 px-6 text-center flex flex-col items-center gap-2.5">
+              <div className="w-9 h-9 rounded-full border border-rule flex items-center justify-center text-ink-faint">
                 <IconStar size={16} />
               </div>
-              <div style={{ fontSize: 12.5, color: 'var(--ink-soft)' }}>
+              <div className="text-[12.5px] text-ink-soft">
                 일본어 텍스트를 선택하면 분석이 시작돼요.
               </div>
-              <div style={{ fontSize: 11, color: 'var(--ink-faint)' }}>
+              <div className="text-[11px] text-ink-faint">
                 페이지의 일본어 문장을 드래그해 보세요
               </div>
             </div>
           )}
           {readerStatus === 'loading' && (
-            <div style={{ padding: '12px 0' }}>
-              <div className="sy-skel" style={{ height: 22, width: '80%', marginBottom: 12 }} />
-              <div className="sy-skel" style={{ height: 22, width: '60%', marginBottom: 12 }} />
-              <div className="sy-skel" style={{ height: 22, width: '90%' }} />
+            <div className="py-3">
+              <div className="sy-skel h-[22px] w-4/5 mb-3" />
+              <div className="sy-skel h-[22px] w-3/5 mb-3" />
+              <div className="sy-skel h-[22px] w-[90%]" />
             </div>
           )}
           {readerStatus === 'error' && (
-            <p style={{ fontSize: 12, color: 'var(--err)', margin: 0 }}>
-              분석 실패. 다시 시도해 주세요.
-            </p>
+            <p className="text-xs text-err m-0">분석 실패. 다시 시도해 주세요.</p>
           )}
         </div>
       )}
 
       {/* Split 레이아웃 */}
       {readerStatus === 'done' && (
-        <div
-          ref={wrapperRef}
-          style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}
-        >
+        <div ref={wrapperRef} className="flex-1 flex flex-col min-h-0">
           {/* 상단: 툴바 + 토큰 */}
           <section
-            style={{
-              height: `${split}%`,
-              minHeight: 80,
-              display: 'flex',
-              flexDirection: 'column',
-              overflow: 'hidden',
-            }}
+            className="flex flex-col overflow-hidden"
+            style={{ height: `${split}%`, minHeight: 80 }}
           >
             <Toolbar
               showFurigana={showFurigana}
@@ -253,10 +149,7 @@ export default function App() {
               onToggleFurigana={toggleFurigana}
               onToggleRomaji={toggleRomaji}
             />
-            <div
-              className="sy-scroll"
-              style={{ flex: 1, overflowY: 'auto', padding: '12px 14px 10px' }}
-            >
+            <div className="sy-scroll flex-1 overflow-y-auto px-3.5 py-3 pb-2.5">
               <TokenFlow
                 tokens={tokens}
                 selectedIdx={selectedIdx}
@@ -272,34 +165,14 @@ export default function App() {
             type="button"
             onMouseDown={onHandleDown}
             aria-label="분할 조절"
-            style={{
-              height: 8,
-              width: '100%',
-              cursor: 'row-resize',
-              background: 'var(--paper-soft)',
-              borderTop: '1px solid var(--rule)',
-              borderBottom: '1px solid var(--rule)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flex: '0 0 auto',
-              padding: 0,
-              border: 'none',
-            }}
+            className="h-2 w-full cursor-row-resize bg-paper-soft border-y border-rule flex items-center justify-center flex-none p-0"
           >
-            <div style={{ width: 28, height: 2, borderRadius: 1, background: 'var(--rule)' }} />
+            <div className="w-7 h-0.5 rounded-sm bg-rule" />
           </button>
 
           {/* 하단: 단어 상세 */}
           <section
-            style={{
-              flex: 1,
-              minHeight: 80,
-              display: 'flex',
-              flexDirection: 'column',
-              background: 'var(--paper-soft)',
-              overflow: 'hidden',
-            }}
+            className={cn('flex-1 flex flex-col bg-paper-soft overflow-hidden min-h-[80px]')}
           >
             {selectedToken && lookup.status !== 'idle' ? (
               <WordCard
@@ -313,19 +186,9 @@ export default function App() {
                 onClose={() => selectToken(selectedIdx!)}
               />
             ) : (
-              <div
-                style={{
-                  flex: 1,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 8,
-                  padding: '24px',
-                }}
-              >
+              <div className="flex-1 flex flex-col items-center justify-center gap-2 p-6">
                 <IconSparkle size={16} />
-                <span style={{ fontSize: 11.5, color: 'var(--ink-mute)' }}>
+                <span className="text-[11.5px] text-ink-mute">
                   위에서 단어를 누르면 뜻이 여기에 표시돼요.
                 </span>
               </div>
