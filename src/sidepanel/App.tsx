@@ -10,6 +10,7 @@ import { BookmarksOver, HistoryOver } from './components/SlideOver';
 import { Toolbar } from './components/Toolbar';
 import { SourceCrumb } from './components/SourceCrumb';
 import { TokenFlow } from './components/TokenFlow';
+import { IconButton } from './components/IconButton';
 import { IconBook, IconClock, IconSettings, IconSparkle, IconStar } from './components/Icons';
 
 type Over = 'bookmarks' | 'history' | 'settings' | null;
@@ -26,34 +27,7 @@ function useLocalToggle(key: string, defaultValue: boolean) {
   return [value, toggle] as const;
 }
 
-function IconBtn({
-  children,
-  label,
-  onClick,
-  badge,
-}: {
-  children: React.ReactNode;
-  label: string;
-  onClick?: () => void;
-  badge?: number;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      title={label}
-      aria-label={label}
-      className="btn-icon w-[30px] h-[30px] rounded-sm text-ink-soft hover:bg-paper-sunk relative"
-    >
-      {children}
-      {badge !== undefined && badge > 0 && (
-        <span className="absolute top-0.5 right-0.5 bg-accent text-white text-[8.5px] px-1 rounded-full font-semibold min-w-3 h-3 flex items-center justify-center leading-none">
-          {badge}
-        </span>
-      )}
-    </button>
-  );
-}
+const headerBtnClass = 'w-[30px] h-[30px] hover:bg-paper-sunk relative';
 
 export default function App() {
   const [over, setOver] = useState<Over>(null);
@@ -86,19 +60,24 @@ export default function App() {
           <span className="font-jp text-[11px] text-ink-faint">側読</span>
         </div>
         <div className="flex gap-0.5">
-          <IconBtn
+          <IconButton
             label="단어장"
             onClick={() => setOver('bookmarks')}
             badge={wordbook.wordbook.size}
+            className={headerBtnClass}
           >
             <IconBook size={15} />
-          </IconBtn>
-          <IconBtn label="최근 본 단어" onClick={() => setOver('history')}>
+          </IconButton>
+          <IconButton
+            label="최근 본 단어"
+            onClick={() => setOver('history')}
+            className={headerBtnClass}
+          >
             <IconClock size={15} />
-          </IconBtn>
-          <IconBtn label="설정" onClick={() => setOver('settings')}>
+          </IconButton>
+          <IconButton label="설정" onClick={() => setOver('settings')} className={headerBtnClass}>
             <IconSettings size={15} />
-          </IconBtn>
+          </IconButton>
         </div>
       </header>
 
@@ -155,6 +134,7 @@ export default function App() {
                 selectedIdx={selectedIdx}
                 showFurigana={showFurigana}
                 showRomaji={showRomaji}
+                selectedReading={lookup.entry?.reading}
                 onTokenClick={selectToken}
               />
             </div>

@@ -1,14 +1,10 @@
-export type StoredBookmark = {
-  word: string;
-  reading: string;
-  meaning: string;
-  addedAt: number;
-};
+import type { Bookmark, Example } from '../types';
 
 export type StoredWordResult = {
+  reading?: string;
   meanings: string[];
   pos: string;
-  examples?: { jp: string; kr: string }[];
+  examples?: Example[];
   related?: string[];
 };
 
@@ -35,15 +31,15 @@ export class ChromeStorage {
     });
   }
 
-  static getBookmarks(): Promise<StoredBookmark[]> {
+  static getBookmarks(): Promise<Bookmark[]> {
     return new Promise((resolve) => {
       chrome.storage.local.get('wordBookmarks', ({ wordBookmarks }) => {
-        resolve((wordBookmarks as StoredBookmark[] | undefined) ?? []);
+        resolve((wordBookmarks as Bookmark[] | undefined) ?? []);
       });
     });
   }
 
-  static setBookmarks(items: StoredBookmark[]): Promise<void> {
+  static setBookmarks(items: Bookmark[]): Promise<void> {
     return new Promise((resolve) => {
       chrome.storage.local.set({ wordBookmarks: items }, resolve);
     });

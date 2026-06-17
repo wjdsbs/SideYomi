@@ -2,9 +2,9 @@ import type { JapaneseToken } from '../models/JapaneseToken';
 import type { WordEntry } from '../models/WordEntry';
 import { ReadingHistory } from '../models/ReadingHistory';
 import { ReadingSession } from '../models/ReadingSession';
+import type { LookupStatus, Source } from '../types';
 
 export type ReaderStatus = 'idle' | 'loading' | 'done' | 'error';
-export type LookupStatus = 'idle' | 'loading' | 'done' | 'no-key' | 'error';
 
 export type AppState = {
   readerStatus: ReaderStatus;
@@ -12,12 +12,12 @@ export type AppState = {
   selectedIdx: number | null;
   session: ReadingSession;
   history: ReadingHistory;
-  source: { title: string; url: string } | null;
+  source: Source | null;
   lookup: { status: LookupStatus; entry: WordEntry | null; error?: string };
 };
 
 export type AppAction =
-  | { type: 'TEXT_LOADING'; source?: { title: string; url: string } }
+  | { type: 'TEXT_LOADING'; source?: Source }
   | { type: 'TEXT_LOADED'; tokens: JapaneseToken[] }
   | { type: 'TEXT_LOAD_FAILED' }
   | { type: 'TOKEN_CLICKED'; idx: number }

@@ -1,11 +1,6 @@
 import type { JapaneseToken } from './JapaneseToken';
-
-export type HistoryEntry = {
-  word: string;
-  reading: string;
-  time: string;
-  src: string;
-};
+import type { HistoryEntry } from '../types';
+import { groupBySrc } from '../lib/groupBySrc';
 
 const MAX_ENTRIES = 50;
 
@@ -28,15 +23,7 @@ export class ReadingHistory {
   }
 
   groupedBySrc(): Record<string, HistoryEntry[]> {
-    return this.entries.reduce<Record<string, HistoryEntry[]>>((acc, entry) => {
-      const group = acc[entry.src];
-      if (!group) {
-        acc[entry.src] = [entry];
-      } else {
-        group.push(entry);
-      }
-      return acc;
-    }, {});
+    return groupBySrc(this.entries);
   }
 
   get length(): number {

@@ -1,12 +1,12 @@
-import type { StoredBookmark } from '../api/ChromeStorage';
+import type { Bookmark } from '../types';
 import type { JapaneseToken } from './JapaneseToken';
 import type { WordEntry } from './WordEntry';
 
 export class Wordbook {
   // Map은 삽입 순서를 보장하므로 별도 정렬 불필요
-  private readonly map: ReadonlyMap<string, StoredBookmark>;
+  private readonly map: ReadonlyMap<string, Bookmark>;
 
-  constructor(items: StoredBookmark[] = []) {
+  constructor(items: Bookmark[] = []) {
     this.map = new Map(items.map((b) => [b.word, b]));
   }
 
@@ -38,7 +38,7 @@ export class Wordbook {
     return new Wordbook(this.toList().filter((b) => b.word !== word));
   }
 
-  toList(): StoredBookmark[] {
+  toList(): Bookmark[] {
     return [...this.map.values()];
   }
 
@@ -48,7 +48,7 @@ export class Wordbook {
       .join('\n');
   }
 
-  toStorable(): StoredBookmark[] {
+  toStorable(): Bookmark[] {
     return this.toList();
   }
 

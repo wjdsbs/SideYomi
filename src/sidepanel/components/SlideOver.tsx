@@ -1,21 +1,9 @@
 import { useState } from 'react';
 import { cn } from '../../lib/cn';
+import { groupBySrc } from '../../lib/groupBySrc';
+import type { Bookmark, HistoryEntry } from '../../types';
 import { IconBack, IconSearch, IconClose, IconStarFill, IconExport } from './Icons';
 import { SpeakerButton } from './WordCard';
-
-export type BookmarkItem = {
-  word: string;
-  reading: string;
-  meaning: string;
-  addedAt: number;
-};
-
-export type HistoryItem = {
-  word: string;
-  reading: string;
-  time: string;
-  src: string;
-};
 
 function formatTime(ts: number): string {
   const diff = Date.now() - ts;
@@ -74,7 +62,7 @@ export function BookmarksOver({
 }: {
   open: boolean;
   onClose: () => void;
-  items: BookmarkItem[];
+  items: Bookmark[];
   onRemove: (word: string) => void;
 }) {
   const [q, setQ] = useState('');
@@ -177,19 +165,11 @@ export function HistoryOver({
 }: {
   open: boolean;
   onClose: () => void;
-  items: HistoryItem[];
+  items: HistoryEntry[];
 }) {
   if (!open) return null;
 
-  const groups = items.reduce<Record<string, HistoryItem[]>>((acc, it) => {
-    const group = acc[it.src];
-    if (!group) {
-      acc[it.src] = [it];
-    } else {
-      group.push(it);
-    }
-    return acc;
-  }, {});
+  const groups = groupBySrc(items);
 
   return (
     <SlideOver title="최근 본 단어" count={`${items.length}개`} onClose={onClose}>

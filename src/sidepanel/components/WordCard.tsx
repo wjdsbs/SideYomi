@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import type { JapaneseToken } from '../../models/JapaneseToken';
 import type { WordEntry } from '../../models/WordEntry';
+import type { LookupStatus } from '../../types';
 import { cn } from '../../lib/cn';
+import { IconButton } from './IconButton';
 import { IconSpeaker, IconStar, IconStarFill, IconClose, IconPlus, IconCopy } from './Icons';
-
-type LookupStatus = 'loading' | 'done' | 'no-key' | 'error';
 
 type WordCardProps = {
   token: JapaneseToken;
@@ -54,33 +54,6 @@ export function SpeakerButton({ word }: { word: string }) {
 
 // ── Internal sub-components ────────────────────────────────────────────────
 
-function IconBtn({
-  children,
-  label,
-  onClick,
-  active,
-}: {
-  children: React.ReactNode;
-  label: string;
-  onClick?: () => void;
-  active?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      title={label}
-      aria-label={label}
-      className={cn(
-        'btn-icon w-7 h-7 rounded-sm',
-        active ? 'text-accent bg-accent-soft' : 'text-ink-soft',
-      )}
-    >
-      {children}
-    </button>
-  );
-}
-
 function FooterBtn({
   children,
   icon,
@@ -126,7 +99,8 @@ function WordCardContent({
   onClose,
   scrollableBody = false,
 }: WordCardProps & { scrollableBody?: boolean }) {
-  const { reading, romaji } = token;
+  const reading = result?.reading ?? token.reading;
+  const { romaji } = token;
 
   const [toast, setToast] = useState<string | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -181,12 +155,17 @@ function WordCardContent({
           </div>
           <div className="flex gap-0 flex-none">
             <SpeakerButton word={token.surface} />
-            <IconBtn label="단어장에 저장" onClick={onBookmark} active={bookmarked}>
+            <IconButton
+              label="단어장에 저장"
+              onClick={onBookmark}
+              active={bookmarked}
+              className="w-7 h-7"
+            >
               {bookmarked ? <IconStarFill size={15} /> : <IconStar size={15} />}
-            </IconBtn>
-            <IconBtn label="닫기" onClick={onClose}>
+            </IconButton>
+            <IconButton label="닫기" onClick={onClose} className="w-7 h-7">
               <IconClose size={15} />
-            </IconBtn>
+            </IconButton>
           </div>
         </div>
       </header>

@@ -3,6 +3,7 @@ import { appReducer, INITIAL_STATE } from './appReducer';
 import type { AppState } from './appReducer';
 import { tokenizerService } from '../api/TokenizerService';
 import type { LookupRequest, LookupResponse } from '../api/messages';
+import type { Source } from '../types';
 import { JapaneseToken } from '../models/JapaneseToken';
 import { WordEntry } from '../models/WordEntry';
 
@@ -24,7 +25,7 @@ export function useApp() {
 
   const reqIdRef = useRef(0);
 
-  const loadText = useCallback(async (text: string, source?: { title: string; url: string }) => {
+  const loadText = useCallback(async (text: string, source?: Source) => {
     dispatch(source !== undefined ? { type: 'TEXT_LOADING', source } : { type: 'TEXT_LOADING' });
     try {
       const raws = await tokenizerService.tokenize(text);
