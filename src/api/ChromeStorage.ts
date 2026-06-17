@@ -1,7 +1,6 @@
 import type { Bookmark, Example } from '../types';
 
 export type StoredWordResult = {
-  reading?: string;
   meanings: string[];
   pos: string;
   examples?: Example[];

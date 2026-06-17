@@ -99,8 +99,7 @@ function WordCardContent({
   onClose,
   scrollableBody = false,
 }: WordCardProps & { scrollableBody?: boolean }) {
-  const reading = result?.reading ?? token.reading;
-  const { romaji } = token;
+  const { reading, romaji } = token;
 
   const [toast, setToast] = useState<string | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);

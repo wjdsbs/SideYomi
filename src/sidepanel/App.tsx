@@ -134,7 +134,6 @@ export default function App() {
                 selectedIdx={selectedIdx}
                 showFurigana={showFurigana}
                 showRomaji={showRomaji}
-                selectedReading={lookup.entry?.reading}
                 onTokenClick={selectToken}
               />
             </div>

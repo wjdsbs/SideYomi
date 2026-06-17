@@ -6,18 +6,10 @@ type Props = {
   selectedIdx: number | null;
   showFurigana: boolean;
   showRomaji: boolean;
-  selectedReading?: string | undefined;
   onTokenClick: (idx: number) => void;
 };
 
-export function TokenFlow({
-  tokens,
-  selectedIdx,
-  showFurigana,
-  showRomaji,
-  selectedReading,
-  onTokenClick,
-}: Props) {
+export function TokenFlow({ tokens, selectedIdx, showFurigana, showRomaji, onTokenClick }: Props) {
   return (
     <div className="relative">
       {selectedIdx !== null && (
@@ -26,17 +18,7 @@ export function TokenFlow({
       <div className="font-jp flex flex-wrap gap-x-0 items-end leading-[2.2] text-[17px]">
         {tokens.map((token, i) => {
           const isSelected = selectedIdx === i;
-          const furigana = (() => {
-            if (!showFurigana) {
-              return null;
-            }
-
-            if (isSelected && selectedReading) {
-              return selectedReading;
-            }
-
-            return token.furigana;
-          })();
+          const furigana = showFurigana ? token.furigana : null;
           const romaji = showRomaji && !token.isPunctuation ? token.romaji : null;
           const isParticle = token.pos === '助詞' || token.pos === '助動詞';
 
