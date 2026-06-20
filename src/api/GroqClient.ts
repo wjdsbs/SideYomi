@@ -41,6 +41,28 @@ Examples:
 const buildTranslatePrompt = (text: string, context: string) =>
   `번역할 텍스트: ${text}\n전체 문맥: ${context}\n위 텍스트 전체를 처음부터 끝까지 빠짐없이 번역하고 정확한 읽기를 제공해 주세요.`;
 
+function formatWait(seconds: number): string {
+  const total = Math.ceil(seconds);
+  const mins = Math.floor(total / 60);
+  const secs = total % 60;
+  if (mins > 0) return secs > 0 ? `약 ${mins}분 ${secs}초` : `약 ${mins}분`;
+  return `약 ${secs}초`;
+}
+
+// 429 응답에서 재시도 대기 시간을 뽑아 한국어 안내 문구로 변환.
+// 1) retry-after 헤더(초) 우선 → 2) 본문 "try again in 22m20.06s" 폴백 → 3) 시간 없는 일반 문구
+function rateLimitMessage(retryAfter: string | null, body: string): string {
+  let seconds = retryAfter ? Number(retryAfter) : NaN;
+  if (!Number.isFinite(seconds)) {
+    const m = body.match(/try again in (?:(\d+)m)?([\d.]+)s/i);
+    if (m) seconds = Number(m[1] ?? 0) * 60 + Number(m[2]);
+  }
+  if (Number.isFinite(seconds) && seconds > 0) {
+    return `Groq 사용량 한도에 도달했어요. ${formatWait(seconds)} 후에 다시 시도해 주세요.`;
+  }
+  return 'Groq 사용량 한도에 도달했어요. 잠시 후 다시 시도해 주세요.';
+}
+
 export class GroqClient {
   constructor(private readonly apiKey: string) {}
 
@@ -64,10 +86,17 @@ export class GroqClient {
     });
 
     if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(
-        (err as { error?: { message?: string } })?.error?.message ?? `Groq API error ${res.status}`,
-      );
+      const raw = await res.text().catch(() => '');
+      if (res.status === 429) {
+        throw new Error(rateLimitMessage(res.headers.get('retry-after'), raw));
+      }
+      let message = `Groq API error ${res.status}`;
+      try {
+        message = (JSON.parse(raw) as { error?: { message?: string } })?.error?.message ?? message;
+      } catch {
+        /* JSON 아님 → 기본 메시지 유지 */
+      }
+      throw new Error(message);
     }
 
     const data = await res.json();
