@@ -1,4 +1,4 @@
-import type { Bookmark, Example } from '../types';
+import type { Bookmark, Example, Translation } from '../types';
 
 export type StoredWordResult = {
   meanings: string[];
@@ -27,6 +27,20 @@ export class ChromeStorage {
   static setWordCache(cache: Record<string, StoredWordResult>): Promise<void> {
     return new Promise((resolve) => {
       chrome.storage.local.set({ wordCache: cache }, resolve);
+    });
+  }
+
+  static getTranslationCache(): Promise<Record<string, Translation>> {
+    return new Promise((resolve) => {
+      chrome.storage.local.get('translationCache', ({ translationCache }) => {
+        resolve((translationCache as Record<string, Translation> | undefined) ?? {});
+      });
+    });
+  }
+
+  static setTranslationCache(cache: Record<string, Translation>): Promise<void> {
+    return new Promise((resolve) => {
+      chrome.storage.local.set({ translationCache: cache }, resolve);
     });
   }
 

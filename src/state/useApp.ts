@@ -2,7 +2,12 @@ import { useCallback, useReducer, useRef } from 'react';
 import { appReducer, INITIAL_STATE } from './appReducer';
 import type { AppState } from './appReducer';
 import { tokenizerService } from '../api/TokenizerService';
-import type { LookupRequest, LookupResponse } from '../api/messages';
+import type {
+  LookupRequest,
+  LookupResponse,
+  TranslateRequest,
+  TranslateResponse,
+} from '../api/messages';
 import type { Source } from '../types';
 import { JapaneseToken } from '../models/JapaneseToken';
 import { WordEntry } from '../models/WordEntry';
@@ -61,7 +66,17 @@ export function useApp() {
       cacheKey: token.cacheKey,
     };
 
-    const response = (await chrome.runtime.sendMessage(request)) as LookupResponse;
+    let response: LookupResponse;
+    try {
+      response = (await chrome.runtime.sendMessage(request)) as LookupResponse;
+    } catch {
+      if (reqId !== reqIdRef.current) return;
+      dispatch({
+        type: 'LOOKUP_FAILED',
+        error: '확장 연결이 끊겼어요. 페이지를 새로고침해 주세요.',
+      });
+      return;
+    }
     if (reqId !== reqIdRef.current) return;
 
     if (!response.ok) {
@@ -77,7 +92,71 @@ export function useApp() {
     dispatch({ type: 'LOOKUP_DONE', entry, token, src: resolveSrc(source) });
   }, []);
 
+  const translateRange = useCallback(async (start: number, end: number) => {
+    const { tokens } = stateRef.current;
+    const text = tokens
+      .slice(start, end + 1)
+      .map((t) => t.surface)
+      .join('');
+    if (!text) return;
+
+    // 전체 문장을 문맥으로 전달 (문맥 의존 번역·읽기 정확도 향상)
+    const context = tokens.map((t) => t.surface).join('');
+
+    dispatch({ type: 'RANGE_SELECTED', start, end });
+
+    // Stale-response guard (단어 조회와 공유)
+    reqIdRef.current += 1;
+    const reqId = reqIdRef.current;
+
+    const request: TranslateRequest = {
+      type: 'TRANSLATE',
+      text,
+      context,
+      cacheKey: `${context}␟${text}`,
+    };
+    let response: TranslateResponse;
+    try {
+      response = (await chrome.runtime.sendMessage(request)) as TranslateResponse;
+    } catch {
+      if (reqId !== reqIdRef.current) return;
+      dispatch({
+        type: 'TRANSLATE_FAILED',
+        error: '확장 연결이 끊겼어요. 페이지를 새로고침해 주세요.',
+      });
+      return;
+    }
+    if (reqId !== reqIdRef.current) return;
+
+    if (!response.ok) {
+      if (response.error === 'NO_KEY') {
+        dispatch({ type: 'TRANSLATE_NO_KEY' });
+      } else {
+        dispatch({ type: 'TRANSLATE_FAILED', error: response.error });
+      }
+      return;
+    }
+
+    dispatch({ type: 'TRANSLATE_DONE', result: response.result });
+  }, []);
+
+  const translateAll = useCallback(() => {
+    const { tokens } = stateRef.current;
+    if (tokens.length === 0) return;
+    translateRange(0, tokens.length - 1);
+  }, [translateRange]);
+
+  const clearTranslation = useCallback(() => dispatch({ type: 'TRANSLATION_CLOSED' }), []);
+
   const clearSession = useCallback(() => dispatch({ type: 'SESSION_CLEARED' }), []);
 
-  return { state, loadText, selectToken, clearSession };
+  return {
+    state,
+    loadText,
+    selectToken,
+    translateRange,
+    translateAll,
+    clearTranslation,
+    clearSession,
+  };
 }

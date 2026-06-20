@@ -18,12 +18,13 @@ type WordCardProps = {
 
 // ── SpeakerButton ──────────────────────────────────────────────────────────
 
-export function SpeakerButton({ word }: { word: string }) {
+export function SpeakerButton({ word, say }: { word: string; say?: string }) {
   const [playing, setPlaying] = useState(false);
 
   const speak = () => {
     setPlaying(true);
-    const utt = new SpeechSynthesisUtterance(word);
+    // 화면에 보이는 읽기(say)를 발음 — 없으면 표면형(word)으로 폴백
+    const utt = new SpeechSynthesisUtterance(say || word);
     utt.lang = 'ja-JP';
     utt.onend = () => setPlaying(false);
     speechSynthesis.speak(utt);
@@ -153,7 +154,7 @@ function WordCardContent({
             )}
           </div>
           <div className="flex gap-0 flex-none">
-            <SpeakerButton word={token.surface} />
+            <SpeakerButton word={token.surface} say={reading ?? token.surface} />
             <IconButton
               label="단어장에 저장"
               onClick={onBookmark}

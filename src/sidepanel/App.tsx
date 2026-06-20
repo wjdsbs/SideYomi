@@ -4,6 +4,7 @@ import { useWordbook } from '../hooks/useWordbook';
 import { useSplitLayout } from '../hooks/useSplitLayout';
 import { cn } from '../lib/cn';
 import { WordCardPanel } from './components/WordCard';
+import { TranslationCard } from './components/TranslationCard';
 import { Settings } from './components/Settings';
 import { SessionStrip } from './components/SessionStrip';
 import { BookmarksOver, HistoryOver } from './components/SlideOver';
@@ -31,7 +32,15 @@ const headerBtnClass = 'w-[30px] h-[30px] hover:bg-paper-sunk relative';
 
 export default function App() {
   const [over, setOver] = useState<Over>(null);
-  const { state, loadText, selectToken, clearSession } = useApp();
+  const {
+    state,
+    loadText,
+    selectToken,
+    translateRange,
+    translateAll,
+    clearTranslation,
+    clearSession,
+  } = useApp();
   const wordbook = useWordbook();
   const wrapperRef = useRef<HTMLDivElement>(null);
   const { split, onHandleDown } = useSplitLayout(wrapperRef);
@@ -47,9 +56,68 @@ export default function App() {
     return () => chrome.runtime.onMessage.removeListener(handler);
   }, [loadText]);
 
-  const { tokens, selectedIdx, session, history, source, lookup, readerStatus } = state;
+  const {
+    tokens,
+    selectedIdx,
+    selectedRange,
+    session,
+    history,
+    source,
+    lookup,
+    translation,
+    readerStatus,
+  } = state;
   const selectedToken = selectedIdx !== null ? (tokens[selectedIdx] ?? null) : null;
   const wordCount = tokens.filter((t) => !t.isPunctuation).length;
+
+  // 선택 구간의 원문 (읽기·로마자는 번역 카드에서 Groq 결과로 도출)
+  const phraseText = selectedRange
+    ? tokens
+        .slice(selectedRange.start, selectedRange.end + 1)
+        .map((t) => t.surface)
+        .join('')
+    : '';
+
+  // "전체 번역" 토글: 이미 전체 범위 번역 중이면 닫기
+  const isFullTranslation =
+    selectedRange !== null && selectedRange.start === 0 && selectedRange.end === tokens.length - 1;
+  const handleTranslateAll = () => (isFullTranslation ? clearTranslation() : translateAll());
+
+  // 하단 패널: 번역(드래그) → 단어(클릭) → 안내
+  let bottomPanel;
+  if (selectedRange) {
+    bottomPanel = (
+      <TranslationCard
+        text={phraseText}
+        status={translation.status}
+        result={translation.result}
+        error={translation.error}
+        showRomaji={showRomaji}
+        onClose={clearTranslation}
+      />
+    );
+  } else if (selectedToken && lookup.status !== 'idle') {
+    bottomPanel = (
+      <WordCardPanel
+        token={selectedToken}
+        result={lookup.entry}
+        status={lookup.status}
+        error={lookup.error}
+        bookmarked={wordbook.wordbook.has(selectedToken.surface)}
+        onBookmark={() => wordbook.toggleBookmark(selectedToken, lookup.entry)}
+        onClose={() => selectToken(selectedIdx!)}
+      />
+    );
+  } else {
+    bottomPanel = (
+      <div className="flex-1 flex flex-col items-center justify-center gap-2 p-6">
+        <IconSparkle size={16} />
+        <span className="text-[11.5px] text-ink-mute">
+          단어를 누르면 뜻, 드래그하면 번역이 여기에 표시돼요.
+        </span>
+      </div>
+    );
+  }
 
   return (
     <div className="font-ui text-ink bg-paper text-[13px] h-screen flex flex-col relative overflow-hidden antialiased">
@@ -127,14 +195,18 @@ export default function App() {
               wordCount={wordCount}
               onToggleFurigana={toggleFurigana}
               onToggleRomaji={toggleRomaji}
+              translateAllActive={isFullTranslation}
+              onTranslateAll={handleTranslateAll}
             />
             <div className="sy-scroll flex-1 overflow-y-auto px-3.5 py-3 pb-2.5">
               <TokenFlow
                 tokens={tokens}
                 selectedIdx={selectedIdx}
+                selectedRange={selectedRange}
                 showFurigana={showFurigana}
                 showRomaji={showRomaji}
                 onTokenClick={selectToken}
+                onRangeSelect={translateRange}
               />
             </div>
           </section>
@@ -153,24 +225,7 @@ export default function App() {
           <section
             className={cn('flex-1 flex flex-col bg-paper-soft overflow-hidden min-h-[80px]')}
           >
-            {selectedToken && lookup.status !== 'idle' ? (
-              <WordCardPanel
-                token={selectedToken}
-                result={lookup.entry}
-                status={lookup.status}
-                error={lookup.error}
-                bookmarked={wordbook.wordbook.has(selectedToken.surface)}
-                onBookmark={() => wordbook.toggleBookmark(selectedToken, lookup.entry)}
-                onClose={() => selectToken(selectedIdx!)}
-              />
-            ) : (
-              <div className="flex-1 flex flex-col items-center justify-center gap-2 p-6">
-                <IconSparkle size={16} />
-                <span className="text-[11.5px] text-ink-mute">
-                  위에서 단어를 누르면 뜻이 여기에 표시돼요.
-                </span>
-              </div>
-            )}
+            {bottomPanel}
           </section>
         </div>
       )}

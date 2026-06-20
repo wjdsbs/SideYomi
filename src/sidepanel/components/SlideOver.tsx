@@ -141,7 +141,7 @@ export function BookmarksOver({
                 <div className="text-xs text-ink-soft mt-0.5 leading-[1.45]">{b.meaning}</div>
                 <div className="text-[10px] text-ink-faint mt-0.5">{formatTime(b.addedAt)}</div>
               </div>
-              <SpeakerButton word={b.word} />
+              <SpeakerButton word={b.word} say={b.reading} />
               <button
                 type="button"
                 onClick={() => onRemove(b.word)}

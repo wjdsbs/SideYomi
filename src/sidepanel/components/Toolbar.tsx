@@ -1,11 +1,14 @@
 import { cn } from '../../lib/cn';
+import { IconSparkle } from './Icons';
 
 type Props = {
   showFurigana: boolean;
   showRomaji: boolean;
   wordCount: number;
+  translateAllActive: boolean;
   onToggleFurigana: () => void;
   onToggleRomaji: () => void;
+  onTranslateAll: () => void;
 };
 
 function ToggleChip({
@@ -40,8 +43,10 @@ export function Toolbar({
   showFurigana,
   showRomaji,
   wordCount,
+  translateAllActive,
   onToggleFurigana,
   onToggleRomaji,
+  onTranslateAll,
 }: Props) {
   return (
     <div className="flex gap-1.5 px-3 py-1.5 items-center border-b border-rule-soft flex-none">
@@ -56,6 +61,12 @@ export function Toolbar({
         active={showRomaji}
         onClick={onToggleRomaji}
         icon={<span className="font-mono text-[9px]">A</span>}
+      />
+      <ToggleChip
+        label="전체 번역"
+        active={translateAllActive}
+        onClick={onTranslateAll}
+        icon={<IconSparkle size={11} />}
       />
       <div className="flex-1" />
       <span className="text-[10.5px] text-ink-faint">{wordCount}어</span>
