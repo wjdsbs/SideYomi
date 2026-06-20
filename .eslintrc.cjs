@@ -31,5 +31,12 @@ module.exports = {
     // TypeScript가 prop 타입 안전성을 보장하므로 불필요
     'react/require-default-props': 'off',
   },
-  ignorePatterns: ['dist', 'node_modules', 'vite.config.ts'],
+  ignorePatterns: [
+    'dist',
+    'node_modules',
+    'scripts',
+    '*.config.js',
+    '*.config.ts',
+    '.eslintrc.cjs',
+  ],
 };
