@@ -1,7 +1,9 @@
-import { useCallback, useReducer, useRef } from 'react';
+import { useCallback, useEffect, useReducer, useRef } from 'react';
 import { appReducer, INITIAL_STATE } from './appReducer';
 import type { AppState } from './appReducer';
 import { tokenizerService } from '../api/TokenizerService';
+import { ChromeStorage } from '../api/ChromeStorage';
+import { ReadingHistory } from '../models/ReadingHistory';
 import type {
   LookupRequest,
   LookupResponse,
@@ -29,6 +31,20 @@ export function useApp() {
   stateRef.current = state;
 
   const reqIdRef = useRef(0);
+
+  // 최근 본 단어 영속화: 마운트 시 1회 로드, 이후 변경마다 저장
+  const historyLoadedRef = useRef(false);
+  useEffect(() => {
+    ChromeStorage.getHistory().then((items) => {
+      dispatch({ type: 'HISTORY_LOADED', history: new ReadingHistory(items) });
+      historyLoadedRef.current = true;
+    });
+  }, []);
+  useEffect(() => {
+    // 로드 완료 전의 빈 초기값을 저장본에 덮어쓰지 않도록 가드
+    if (!historyLoadedRef.current) return;
+    ChromeStorage.setHistory(state.history.toStorable());
+  }, [state.history]);
 
   const loadText = useCallback(async (text: string, source?: Source) => {
     dispatch(source !== undefined ? { type: 'TEXT_LOADING', source } : { type: 'TEXT_LOADING' });

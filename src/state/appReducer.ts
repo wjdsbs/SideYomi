@@ -28,7 +28,8 @@ export type AppAction =
   | { type: 'TRANSLATE_NO_KEY' }
   | { type: 'TRANSLATE_DONE'; result: Translation }
   | { type: 'TRANSLATE_FAILED'; error: string }
-  | { type: 'TRANSLATION_CLOSED' };
+  | { type: 'TRANSLATION_CLOSED' }
+  | { type: 'HISTORY_LOADED'; history: ReadingHistory };
 
 const IDLE_LOOKUP: AppState['lookup'] = { status: 'idle', entry: null };
 const LOADING_LOOKUP: AppState['lookup'] = { status: 'loading', entry: null };
@@ -87,7 +88,7 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       return {
         ...state,
         lookup: { status: 'done', entry: action.entry },
-        history: state.history.push(action.token, action.src),
+        history: state.history.push(action.token, action.entry, action.src),
       };
 
     case 'LOOKUP_FAILED':
@@ -114,6 +115,9 @@ export function appReducer(state: AppState, action: AppAction): AppState {
 
     case 'TRANSLATION_CLOSED':
       return { ...state, selectedRange: null, translation: IDLE_TRANSLATION };
+
+    case 'HISTORY_LOADED':
+      return { ...state, history: action.history };
 
     default:
       return state;

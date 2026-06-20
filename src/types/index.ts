@@ -10,12 +10,15 @@ export type Bookmark = {
   word: string;
   reading: string;
   meaning: string;
+  examples?: Example[];
   addedAt: number;
 };
 
 export type HistoryEntry = {
   word: string;
   reading: string;
-  time: string;
+  meaning: string;
+  examples?: Example[];
+  addedAt: number;
   src: string;
 };

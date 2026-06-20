@@ -1,4 +1,4 @@
-import type { Bookmark, Example, Translation } from '../types';
+import type { Bookmark, Example, HistoryEntry, Translation } from '../types';
 
 export type StoredWordResult = {
   meanings: string[];
@@ -55,6 +55,20 @@ export class ChromeStorage {
   static setBookmarks(items: Bookmark[]): Promise<void> {
     return new Promise((resolve) => {
       chrome.storage.local.set({ wordBookmarks: items }, resolve);
+    });
+  }
+
+  static getHistory(): Promise<HistoryEntry[]> {
+    return new Promise((resolve) => {
+      chrome.storage.local.get('wordHistory', ({ wordHistory }) => {
+        resolve((wordHistory as HistoryEntry[] | undefined) ?? []);
+      });
+    });
+  }
+
+  static setHistory(items: HistoryEntry[]): Promise<void> {
+    return new Promise((resolve) => {
+      chrome.storage.local.set({ wordHistory: items }, resolve);
     });
   }
 }

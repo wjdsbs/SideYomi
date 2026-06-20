@@ -19,17 +19,21 @@ export class Wordbook {
   }
 
   add(token: JapaneseToken, entry: WordEntry): Wordbook {
-    const next = new Map(this.map);
-    next.set(token.surface, {
+    return this.addRecord({
       word: token.surface,
       reading: token.reading ?? token.surface,
       meaning: entry.primaryMeaning,
+      examples: entry.examples,
       addedAt: Date.now(),
     });
+  }
+
+  // 완성된 Bookmark 레코드를 그대로 저장 (예: 최근 본 단어 → 단어장 승격)
+  addRecord(bookmark: Bookmark): Wordbook {
     // 새로 추가된 항목이 앞에 오도록
     const ordered = [
-      next.get(token.surface)!,
-      ...this.toList().filter((b) => b.word !== token.surface),
+      { ...bookmark, addedAt: Date.now() },
+      ...this.toList().filter((b) => b.word !== bookmark.word),
     ];
     return new Wordbook(ordered);
   }

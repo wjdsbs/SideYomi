@@ -218,6 +218,8 @@ export default function App() {
         open={over === 'history'}
         onClose={() => setOver(null)}
         items={history.toList()}
+        wordbook={wordbook.wordbook}
+        onToggleSave={(entry) => wordbook.toggleSave(entry)}
       />
       {over === 'settings' && <Settings onClose={() => setOver(null)} />}
     </div>
