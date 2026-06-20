@@ -7,6 +7,7 @@ export function Settings({ onClose }: Props) {
   const [savedKey, setSavedKey] = useState('');
   const [inputKey, setInputKey] = useState('');
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     chrome.storage.local.get('groqApiKey', ({ groqApiKey }) => {
@@ -14,21 +15,37 @@ export function Settings({ onClose }: Props) {
     });
   }, []);
 
+  // "저장됨 ✓" 표시를 2초 뒤 자동 해제 — 닫히면 타이머 정리
+  useEffect(() => {
+    if (!saved) return undefined;
+    const id = setTimeout(() => setSaved(false), 2000);
+    return () => clearTimeout(id);
+  }, [saved]);
+
   const handleSave = () => {
     const key = inputKey.trim();
     if (!key) return;
     chrome.storage.local.set({ groqApiKey: key }, () => {
+      if (chrome.runtime.lastError) {
+        setError('키 저장에 실패했어요. 다시 시도해 주세요.');
+        return;
+      }
       setSavedKey(key);
       setInputKey('');
+      setError('');
       setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
     });
   };
 
   const handleClear = () => {
     chrome.storage.local.remove('groqApiKey', () => {
+      if (chrome.runtime.lastError) {
+        setError('키 삭제에 실패했어요. 다시 시도해 주세요.');
+        return;
+      }
       setSavedKey('');
       setInputKey('');
+      setError('');
     });
   };
 
@@ -83,8 +100,11 @@ export function Settings({ onClose }: Props) {
           <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--ink)', marginBottom: 4 }}>
             Groq API 키
           </div>
-          <p style={{ fontSize: 11.5, color: 'var(--ink-mute)', margin: '0 0 12px' }}>
+          <p style={{ fontSize: 11.5, color: 'var(--ink-mute)', margin: '0 0 6px' }}>
             단어 뜻(한국어)을 보려면 console.groq.com에서 발급한 키가 필요해요.
+          </p>
+          <p style={{ fontSize: 11, color: 'var(--ink-faint)', margin: '0 0 12px' }}>
+            키는 이 브라우저에만 저장되고 외부로 전송되지 않아요.
           </p>
 
           {maskedKey && (
@@ -173,6 +193,10 @@ export function Settings({ onClose }: Props) {
               {saved ? '저장됨 ✓' : '저장'}
             </button>
           </div>
+
+          {error && (
+            <p style={{ fontSize: 11.5, color: 'var(--err)', margin: '8px 0 0' }}>{error}</p>
+          )}
         </div>
       </div>
     </div>
