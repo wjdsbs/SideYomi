@@ -23,6 +23,30 @@ function resolveSrc(source: AppState['source']): string {
   }
 }
 
+// 문장 종결부호 + 줄바꿈 — 이 토큰 뒤에서 문장이 끊긴다고 본다
+const SENTENCE_END = /[。！？!?…\n]/;
+
+// 선택 범위[start,end]를 포함하는 문장과 그 앞뒤 한 문장씩을 문맥으로 추출.
+// 문서 전체를 보내던 것을 ±1문장으로 줄여 토큰을 크게 절감한다.
+function sentenceContext(tokens: JapaneseToken[], start: number, end: number): string {
+  // 각 토큰을 문장 번호로 매핑 (종결부호 토큰 뒤에서 번호 증가)
+  let s = 0;
+  const sentenceOf = tokens.map((t) => {
+    const cur = s;
+    if (SENTENCE_END.test(t.surface)) s += 1;
+    return cur;
+  });
+  const first = (sentenceOf[start] ?? 0) - 1;
+  const last = (sentenceOf[end] ?? s) + 1;
+  return tokens
+    .filter((_, i) => {
+      const si = sentenceOf[i] ?? 0;
+      return si >= first && si <= last;
+    })
+    .map((t) => t.surface)
+    .join('');
+}
+
 export function useApp() {
   const [state, dispatch] = useReducer(appReducer, INITIAL_STATE);
 
@@ -116,8 +140,11 @@ export function useApp() {
       .join('');
     if (!text) return;
 
-    // 전체 문장을 문맥으로 전달 (문맥 의존 번역·읽기 정확도 향상)
-    const context = tokens.map((t) => t.surface).join('');
+    // 문맥: 선택 문장 ±1문장만 전달해 토큰 절감 (문맥 의존 정확도는 거의 유지).
+    // 문서 전체 선택이거나 문맥이 본문과 같으면 중복이므로 생략 → 캐시 적중률↑
+    let context =
+      start === 0 && end === tokens.length - 1 ? '' : sentenceContext(tokens, start, end);
+    if (context === text) context = '';
 
     dispatch({ type: 'RANGE_SELECTED', start, end });
 

@@ -38,6 +38,12 @@ export class JapaneseToken {
     return this.raw.pos === '記号';
   }
 
+  // 줄바꿈 기호 토큰 — kuromoji가 원문의 \n을 記号로 보존한다.
+  // 렌더 시 인라인 글자가 아니라 실제 줄바꿈으로 그리기 위한 판별.
+  get isLineBreak(): boolean {
+    return /\n/.test(this.surface);
+  }
+
   get hasKanji(): boolean {
     return hasKanji(this.raw.surface_form);
   }

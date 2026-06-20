@@ -11,15 +11,14 @@ Output format — JSON only, no explanation, no markdown:
 Rules:
 - meanings: standard Korean equivalents, max 4, most common first
 - pos: one of 명사/동사/형용사/부사/조사/표현
-- examples: 1-2 natural sentences using the word, or [] for particles/auxiliaries/very short words
-- related: 1-3 related Japanese words, or []
+- examples: exactly 1 natural sentence a native speaker would actually say, using common collocations; avoid textbook clichés. Use [] for particles/auxiliaries/very short words
+- related: 1 closely related Japanese word, or []
 - Do NOT generate or modify the reading — it is already given.
 
 Examples:
-食べる たべる → {"meanings":["먹다"],"pos":"동사","examples":[{"jp":"ご飯を食べる。","kr":"밥을 먹는다."}],"related":["飲む","食事"]}
-高い たかい → {"meanings":["비싸다","높다"],"pos":"형용사","examples":[{"jp":"この店は高い。","kr":"이 가게는 비싸다."}],"related":["安い","低い"]}
-安い やすい → {"meanings":["싸다","저렴하다"],"pos":"형용사","examples":[{"jp":"このスーパーは安い。","kr":"이 마트는 싸다."}],"related":["高い"]}
-学校 がっこう → {"meanings":["학교"],"pos":"명사","examples":[{"jp":"学校に行く。","kr":"학교에 가다."}],"related":["大学","教室"]}`;
+食べる たべる → {"meanings":["먹다"],"pos":"동사","examples":[{"jp":"今夜は外で食べることにした。","kr":"오늘 밤은 밖에서 먹기로 했다."}],"related":["食事"]}
+高い たかい → {"meanings":["비싸다","높다"],"pos":"형용사","examples":[{"jp":"駅前のマンションは家賃が高い。","kr":"역 앞 맨션은 월세가 비싸다."}],"related":["安い"]}
+学校 がっこう → {"meanings":["학교"],"pos":"명사","examples":[{"jp":"子どもたちが歩いて学校に通っている。","kr":"아이들이 걸어서 학교에 다니고 있다."}],"related":["大学"]}`;
 
 const buildUserPrompt = (surfaceForm: string, reading: string, context: string) =>
   `단어: ${surfaceForm}\n읽기: ${reading}\n문맥: ${context}\n위 단어의 한국어 뜻만 간결하게.`;
@@ -36,7 +35,7 @@ Rules:
 Examples:
 텍스트: レジかご / 문맥: レジかごサイズはお選びいただけます → {"translation":"계산대 장바구니","reading":"れじかご"}
 텍스트: 6月18日 / 문맥: 6月18日（木）に大丸京都店をオープンいたします → {"translation":"6월 18일","reading":"ろくがつじゅうはちにち"}
-텍스트: ピーチへの熱い想いにいくつかお返事もさせていただきます / 문맥: (동일) → {"translation":"피치를 향한 뜨거운 마음에 몇 가지 답변도 드리겠습니다","reading":"ぴーちへのあついおもいにいくつかおへんじもさせていただきます"}`;
+`;
 
 const buildTranslatePrompt = (text: string, context: string) =>
   `번역할 텍스트: ${text}\n전체 문맥: ${context}\n위 텍스트 전체를 처음부터 끝까지 빠짐없이 번역하고 정확한 읽기를 제공해 주세요.`;
@@ -66,7 +65,11 @@ function rateLimitMessage(retryAfter: string | null, body: string): string {
 export class GroqClient {
   constructor(private readonly apiKey: string) {}
 
-  private async complete(systemPrompt: string, userPrompt: string): Promise<unknown> {
+  private async complete(
+    systemPrompt: string,
+    userPrompt: string,
+    options: { temperature: number; maxTokens: number },
+  ): Promise<unknown> {
     const res = await fetch(GROQ_API_URL, {
       method: 'POST',
       headers: {
@@ -80,8 +83,8 @@ export class GroqClient {
           { role: 'user', content: userPrompt },
         ],
         response_format: { type: 'json_object' },
-        temperature: 0,
-        max_tokens: 4096,
+        temperature: options.temperature,
+        max_tokens: options.maxTokens,
       }),
     });
 
@@ -107,16 +110,16 @@ export class GroqClient {
   }
 
   async lookup(surfaceForm: string, reading: string, context: string): Promise<StoredWordResult> {
-    return (await this.complete(
-      SYSTEM_PROMPT,
-      buildUserPrompt(surfaceForm, reading, context),
-    )) as StoredWordResult;
+    return (await this.complete(SYSTEM_PROMPT, buildUserPrompt(surfaceForm, reading, context), {
+      temperature: 0.35, // 예문 표현이 살아나도록 약간의 다양성 (JSON 형식은 유지)
+      maxTokens: 512,
+    })) as StoredWordResult;
   }
 
   async translate(text: string, context: string): Promise<Translation> {
-    return (await this.complete(
-      TRANSLATE_PROMPT,
-      buildTranslatePrompt(text, context),
-    )) as Translation;
+    return (await this.complete(TRANSLATE_PROMPT, buildTranslatePrompt(text, context), {
+      temperature: 0, // 번역은 정확·일관이 우선
+      maxTokens: 2048,
+    })) as Translation;
   }
 }
