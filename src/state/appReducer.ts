@@ -1,7 +1,6 @@
 import type { JapaneseToken } from '../models/JapaneseToken';
 import type { WordEntry } from '../models/WordEntry';
 import { ReadingHistory } from '../models/ReadingHistory';
-import { ReadingSession } from '../models/ReadingSession';
 import type { LookupStatus, Source, Translation } from '../types';
 
 export type ReaderStatus = 'idle' | 'loading' | 'done' | 'error';
@@ -11,7 +10,6 @@ export type AppState = {
   tokens: JapaneseToken[];
   selectedIdx: number | null;
   selectedRange: { start: number; end: number } | null;
-  session: ReadingSession;
   history: ReadingHistory;
   source: Source | null;
   lookup: { status: LookupStatus; entry: WordEntry | null; error?: string };
@@ -30,8 +28,7 @@ export type AppAction =
   | { type: 'TRANSLATE_NO_KEY' }
   | { type: 'TRANSLATE_DONE'; result: Translation }
   | { type: 'TRANSLATE_FAILED'; error: string }
-  | { type: 'TRANSLATION_CLOSED' }
-  | { type: 'SESSION_CLEARED' };
+  | { type: 'TRANSLATION_CLOSED' };
 
 const IDLE_LOOKUP: AppState['lookup'] = { status: 'idle', entry: null };
 const LOADING_LOOKUP: AppState['lookup'] = { status: 'loading', entry: null };
@@ -43,7 +40,6 @@ export const INITIAL_STATE: AppState = {
   tokens: [],
   selectedIdx: null,
   selectedRange: null,
-  session: ReadingSession.empty(),
   history: ReadingHistory.empty(),
   source: null,
   lookup: IDLE_LOOKUP,
@@ -92,7 +88,6 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         ...state,
         lookup: { status: 'done', entry: action.entry },
         history: state.history.push(action.token, action.src),
-        session: state.session.push(action.token.surface),
       };
 
     case 'LOOKUP_FAILED':
@@ -119,9 +114,6 @@ export function appReducer(state: AppState, action: AppAction): AppState {
 
     case 'TRANSLATION_CLOSED':
       return { ...state, selectedRange: null, translation: IDLE_TRANSLATION };
-
-    case 'SESSION_CLEARED':
-      return { ...state, session: state.session.clear() };
 
     default:
       return state;

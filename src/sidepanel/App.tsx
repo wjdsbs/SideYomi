@@ -6,10 +6,8 @@ import { cn } from '../lib/cn';
 import { WordCardPanel } from './components/WordCard';
 import { TranslationCard } from './components/TranslationCard';
 import { Settings } from './components/Settings';
-import { SessionStrip } from './components/SessionStrip';
 import { BookmarksOver, HistoryOver } from './components/SlideOver';
 import { Toolbar } from './components/Toolbar';
-import { SourceCrumb } from './components/SourceCrumb';
 import { TokenFlow } from './components/TokenFlow';
 import { IconButton } from './components/IconButton';
 import { IconBook, IconClock, IconSettings, IconSparkle, IconStar } from './components/Icons';
@@ -32,15 +30,7 @@ const headerBtnClass = 'w-[30px] h-[30px] hover:bg-paper-sunk relative';
 
 export default function App() {
   const [over, setOver] = useState<Over>(null);
-  const {
-    state,
-    loadText,
-    selectToken,
-    translateRange,
-    translateAll,
-    clearTranslation,
-    clearSession,
-  } = useApp();
+  const { state, loadText, selectToken, translateRange, translateAll, clearTranslation } = useApp();
   const wordbook = useWordbook();
   const wrapperRef = useRef<HTMLDivElement>(null);
   const { split, onHandleDown } = useSplitLayout(wrapperRef);
@@ -56,17 +46,7 @@ export default function App() {
     return () => chrome.runtime.onMessage.removeListener(handler);
   }, [loadText]);
 
-  const {
-    tokens,
-    selectedIdx,
-    selectedRange,
-    session,
-    history,
-    source,
-    lookup,
-    translation,
-    readerStatus,
-  } = state;
+  const { tokens, selectedIdx, selectedRange, history, lookup, translation, readerStatus } = state;
   const selectedToken = selectedIdx !== null ? (tokens[selectedIdx] ?? null) : null;
   const wordCount = tokens.filter((t) => !t.isPunctuation).length;
 
@@ -149,9 +129,6 @@ export default function App() {
         </div>
       </header>
 
-      {/* 출처 */}
-      {source && <SourceCrumb title={source.title} url={source.url} />}
-
       {/* 비활성 상태 */}
       {readerStatus !== 'done' && (
         <div className="sy-scroll flex-1 overflow-y-auto px-3.5 py-5">
@@ -229,19 +206,6 @@ export default function App() {
           </section>
         </div>
       )}
-
-      {/* 세션 스트립 */}
-      <SessionStrip
-        session={session.toList()}
-        onJump={(word) => {
-          const idx = tokens.findIndex((t) => t.surface === word);
-          if (idx >= 0) {
-            setOver(null);
-            selectToken(idx);
-          }
-        }}
-        onClear={clearSession}
-      />
 
       {/* 슬라이드오버 */}
       <BookmarksOver

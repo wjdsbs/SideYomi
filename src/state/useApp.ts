@@ -148,8 +148,6 @@ export function useApp() {
 
   const clearTranslation = useCallback(() => dispatch({ type: 'TRANSLATION_CLOSED' }), []);
 
-  const clearSession = useCallback(() => dispatch({ type: 'SESSION_CLEARED' }), []);
-
   return {
     state,
     loadText,
@@ -157,6 +155,5 @@ export function useApp() {
     translateRange,
     translateAll,
     clearTranslation,
-    clearSession,
   };
 }
