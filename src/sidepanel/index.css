@@ -1,3 +1,103 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&family=Noto+Serif+JP:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --paper:       oklch(0.985 0.005 85);
+  --paper-soft:  oklch(0.965 0.008 85);
+  --paper-sunk:  oklch(0.945 0.010 85);
+  --rule:        oklch(0.90  0.008 85);
+  --rule-soft:   oklch(0.94  0.006 85);
+  --ink:         oklch(0.22  0.015 250);
+  --ink-soft:    oklch(0.38  0.015 250);
+  --ink-mute:    oklch(0.55  0.012 250);
+  --ink-faint:   oklch(0.72  0.010 250);
+  --accent:      oklch(0.42  0.10  245);
+  --accent-soft: oklch(0.92  0.04  245);
+  --accent-line: oklch(0.82  0.05  245);
+  --mark:        oklch(0.94  0.07  92);
+  --mark-line:   oklch(0.84  0.10  92);
+  --err:         oklch(0.50  0.13  25);
+  --font-ui:  'Noto Sans KR', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-jp:  'Noto Serif JP', 'Hiragino Mincho ProN', serif;
+  --font-jp-sans: 'Noto Sans JP', 'Hiragino Sans', sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', Menlo, monospace;
+  --r-xs: 4px; --r-sm: 6px; --r-md: 10px; --r-lg: 14px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --paper:       oklch(0.19  0.012 250);
+    --paper-soft:  oklch(0.22  0.013 250);
+    --paper-sunk:  oklch(0.25  0.014 250);
+    --rule:        oklch(0.30  0.012 250);
+    --rule-soft:   oklch(0.26  0.012 250);
+    --ink:         oklch(0.93  0.008 85);
+    --ink-soft:    oklch(0.78  0.010 85);
+    --ink-mute:    oklch(0.60  0.012 85);
+    --ink-faint:   oklch(0.45  0.012 85);
+    --accent:      oklch(0.78  0.10  245);
+    --accent-soft: oklch(0.30  0.05  245);
+    --accent-line: oklch(0.40  0.07  245);
+    --mark:        oklch(0.38  0.06  92);
+    --mark-line:   oklch(0.55  0.08  92);
+    --err:         oklch(0.75  0.13  25);
+  }
+}
+[data-theme='dark'] {
+  --paper:       oklch(0.19  0.012 250);
+  --paper-soft:  oklch(0.22  0.013 250);
+  --paper-sunk:  oklch(0.25  0.014 250);
+  --rule:        oklch(0.30  0.012 250);
+  --rule-soft:   oklch(0.26  0.012 250);
+  --ink:         oklch(0.93  0.008 85);
+  --ink-soft:    oklch(0.78  0.010 85);
+  --ink-mute:    oklch(0.60  0.012 85);
+  --ink-faint:   oklch(0.45  0.012 85);
+  --accent:      oklch(0.78  0.10  245);
+  --accent-soft: oklch(0.30  0.05  245);
+  --accent-line: oklch(0.40  0.07  245);
+  --mark:        oklch(0.38  0.06  92);
+  --mark-line:   oklch(0.55  0.08  92);
+  --err:         oklch(0.75  0.13  25);
+}
+
+* { box-sizing: border-box; }
+
+.sy-scroll { scrollbar-width: thin; scrollbar-color: var(--rule) transparent; }
+.sy-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+.sy-scroll::-webkit-scrollbar-thumb { background: var(--rule); border-radius: 4px; }
+.sy-scroll::-webkit-scrollbar-track { background: transparent; }
+
+@keyframes sy-pulse  { 0%,100%{opacity:1} 50%{opacity:0.55} }
+@keyframes sy-rise   { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
+@keyframes sy-tts    { 0%{transform:scale(1);opacity:.9} 100%{transform:scale(1.7);opacity:0} }
+@keyframes sy-slide  { from{transform:translateX(100%)} to{transform:translateX(0)} }
+@keyframes sy-toast  {
+  0%{transform:translate(-50%,6px);opacity:0}
+  15%{transform:translate(-50%,0);opacity:1}
+  85%{transform:translate(-50%,0);opacity:1}
+  100%{transform:translate(-50%,-6px);opacity:0}
+}
+
+.sy-rise    { animation: sy-rise   .22s cubic-bezier(.2,.7,.3,1) both; }
+.sy-slide   { animation: sy-slide  .26s cubic-bezier(.2,.7,.3,1) both; }
+.sy-toast   { animation: sy-toast  1.8s ease-out forwards; }
+.sy-skel    { background: var(--paper-sunk); animation: sy-pulse 1.4s ease-in-out infinite; border-radius: var(--r-xs); }
+
+@layer components {
+  /* 아이콘 버튼 기본형 — 크기/모양만. 색상은 cn()으로 조합 */
+  .btn-icon {
+    @apply flex items-center justify-center border-0 cursor-pointer transition-all duration-150 bg-transparent;
+  }
+  /* 섹션 레이블 (뜻/예문/관련어 등의 소제목) */
+  .section-label {
+    @apply text-[10px] uppercase tracking-[0.12em] text-ink-mute font-semibold mb-1.5;
+  }
+  /* 품사/태그 칩 */
+  .chip {
+    @apply text-[10px] px-1.5 py-px rounded-full border font-medium text-ink-soft bg-paper-sunk border-rule;
+  }
+}
