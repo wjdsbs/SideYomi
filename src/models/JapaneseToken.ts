@@ -22,6 +22,13 @@ export class JapaneseToken {
     return this.raw.reading ? katakanaToHiragana(this.raw.reading) : null;
   }
 
+  // 사전 기본형(활용 이전). kuromoji가 모르면 '*' → 표면형으로 폴백.
+  // 로컬 사전(표제어 키)을 활용형으로도 맞히기 위해 사용.
+  get basicForm(): string {
+    const b = this.raw.basic_form;
+    return b && b !== '*' ? b : this.surface;
+  }
+
   get pos(): string {
     return this.raw.pos;
   }

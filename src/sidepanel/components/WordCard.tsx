@@ -150,6 +150,12 @@ function WordCardContent({
             {result && (
               <div className="flex gap-1.5 mt-1.5 items-center flex-wrap">
                 <span className="chip">{result.pos}</span>
+                <span
+                  className="chip"
+                  title={result.origin === 'local' ? '로컬 사전' : 'AI가 생성한 뜻'}
+                >
+                  {result.origin === 'local' ? '사전' : 'AI 생성'}
+                </span>
               </div>
             )}
           </div>
@@ -182,7 +188,9 @@ function WordCardContent({
 
         {status === 'no-key' && (
           <p className="text-xs text-ink-mute m-0">
-            설정에서 Groq API 키를 입력하면 단어 뜻을 볼 수 있어요.
+            사전에 없는 단어예요.
+            <br />
+            설정에서 Groq API 키를 입력하면 AI로 뜻을 확인할 수 있어요.
           </p>
         )}
 
@@ -192,6 +200,13 @@ function WordCardContent({
 
         {status === 'done' && result && (
           <div className="flex flex-col gap-3.5">
+            {/* 동음이의어 가드: 사전 기본형 읽기가 클릭한 토큰 읽기와 다르면 명시 */}
+            {result.reading && result.reading !== reading && (
+              <p className="text-[11px] text-ink-mute m-0">
+                기본형: <span className="font-jp-sans text-ink-soft">{result.reading}</span>
+              </p>
+            )}
+
             {/* meanings */}
             <div>
               <div className="section-label">뜻</div>

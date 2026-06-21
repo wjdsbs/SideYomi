@@ -1,6 +1,6 @@
 import type { StoredWordResult } from '../api/ChromeStorage';
 import type { JapaneseToken } from './JapaneseToken';
-import type { Example } from '../types';
+import type { Example, Origin } from '../types';
 
 export class WordEntry {
   readonly meanings: string[];
@@ -11,11 +11,17 @@ export class WordEntry {
 
   readonly related: string[];
 
+  readonly origin: Origin;
+
+  readonly reading: string | undefined;
+
   constructor(data: StoredWordResult) {
     this.meanings = data.meanings;
     this.pos = data.pos;
     this.examples = data.examples ?? [];
     this.related = data.related ?? [];
+    this.origin = data.origin ?? 'ai';
+    this.reading = data.reading;
   }
 
   get primaryMeaning(): string {
@@ -33,6 +39,7 @@ export class WordEntry {
       pos: this.pos,
       examples: this.examples,
       related: this.related,
+      origin: this.origin,
     };
   }
 

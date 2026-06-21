@@ -2,6 +2,7 @@ import { useCallback, useEffect, useReducer, useRef } from 'react';
 import { appReducer, INITIAL_STATE } from './appReducer';
 import type { AppState } from './appReducer';
 import { tokenizerService } from '../api/TokenizerService';
+import { localDictService } from '../api/LocalDictService';
 import { ChromeStorage } from '../api/ChromeStorage';
 import { ReadingHistory } from '../models/ReadingHistory';
 import type {
@@ -56,6 +57,12 @@ export function useApp() {
 
   const reqIdRef = useRef(0);
 
+  useEffect(() => {
+    localDictService.load().catch(() => {
+      /* 적재 실패 시 조회는 groq로 폴백 */
+    });
+  }, []);
+
   // 최근 본 단어 영속화: 마운트 시 1회 로드, 이후 변경마다 저장
   const historyLoadedRef = useRef(false);
   useEffect(() => {
@@ -94,6 +101,24 @@ export function useApp() {
     // Stale-response guard
     reqIdRef.current += 1;
     const reqId = reqIdRef.current;
+
+    // 로컬 사전 우선 — 적재돼 있으면 즉시(네트워크·API키 불필요). 미스면 groq로 폴백.
+    try {
+      await localDictService.load();
+      if (reqId !== reqIdRef.current) return;
+      const local = localDictService.lookup(token.surface, token.basicForm, token.reading);
+      if (local) {
+        dispatch({
+          type: 'LOOKUP_DONE',
+          entry: new WordEntry(local),
+          token,
+          src: resolveSrc(source),
+        });
+        return;
+      }
+    } catch {
+      /* 적재 실패 → groq 폴백 */
+    }
 
     const prev = tokens[idx - 1];
     const next = tokens[idx + 1];

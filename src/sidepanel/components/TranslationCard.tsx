@@ -67,7 +67,7 @@ export function TranslationCard({ text, status, result, error, showRomaji, onClo
 
         {status === 'no-key' && (
           <p className="text-xs text-ink-mute m-0">
-            설정에서 Groq API 키를 입력하면 번역을 볼 수 있어요.
+            설정에서 Groq API 키를 입력하면 AI 번역을 볼 수 있어요.
           </p>
         )}
 

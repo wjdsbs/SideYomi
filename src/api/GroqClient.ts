@@ -5,20 +5,22 @@ const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 const MODEL = 'llama-3.3-70b-versatile';
 
 const SYSTEM_PROMPT = `You are a Japanese-Korean dictionary assistant.
+Common words are already covered by a local dictionary; the words you receive are usually rare, proper nouns, loanwords, or slang. Lean on the given 문맥 to disambiguate.
 Given a Japanese word with its reading already provided, output ONLY a JSON object.
 Output format — JSON only, no explanation, no markdown:
-{"meanings":["뜻1"],"pos":"품사","examples":[{"jp":"예문","kr":"번역"}],"related":["관련어"]}
+{"meanings":["뜻1"],"pos":"품사","related":["관련어"]}
 Rules:
-- meanings: standard Korean equivalents, max 4, most common first
-- pos: one of 명사/동사/형용사/부사/조사/표현
-- examples: exactly 1 natural sentence a native speaker would actually say, using common collocations; avoid textbook clichés. Use [] for particles/auxiliaries/very short words
+- meanings: standard Korean equivalents, max 4, most common first. For a proper noun, give the Korean spelling plus a short type note in parentheses (인명/지명/회사명 등).
+- pos: one of 명사/동사/형용사/부사/조사/표현/고유명사
+- Use 문맥 to choose the right sense and to decide whether the word is a proper noun.
 - related: 1 closely related Japanese word, or []
+- Do NOT generate example sentences.
 - Do NOT generate or modify the reading — it is already given.
 
 Examples:
-食べる たべる → {"meanings":["먹다"],"pos":"동사","examples":[{"jp":"今夜は外で食べることにした。","kr":"오늘 밤은 밖에서 먹기로 했다."}],"related":["食事"]}
-高い たかい → {"meanings":["비싸다","높다"],"pos":"형용사","examples":[{"jp":"駅前のマンションは家賃が高い。","kr":"역 앞 맨션은 월세가 비싸다."}],"related":["安い"]}
-学校 がっこう → {"meanings":["학교"],"pos":"명사","examples":[{"jp":"子どもたちが歩いて学校に通っている。","kr":"아이들이 걸어서 학교에 다니고 있다."}],"related":["大学"]}`;
+渋谷 しぶや → {"meanings":["시부야(도쿄의 지명)"],"pos":"고유명사","related":[]}
+エモい えもい → {"meanings":["감성적이다","뭉클하다"],"pos":"형용사","related":[]}
+語彙力 ごいりょく → {"meanings":["어휘력"],"pos":"명사","related":["語彙"]}`;
 
 const buildUserPrompt = (surfaceForm: string, reading: string, context: string) =>
   `단어: ${surfaceForm}\n읽기: ${reading}\n문맥: ${context}\n위 단어의 한국어 뜻만 간결하게.`;
@@ -111,8 +113,8 @@ export class GroqClient {
 
   async lookup(surfaceForm: string, reading: string, context: string): Promise<StoredWordResult> {
     return (await this.complete(SYSTEM_PROMPT, buildUserPrompt(surfaceForm, reading, context), {
-      temperature: 0.35, // 예문 표현이 살아나도록 약간의 다양성 (JSON 형식은 유지)
-      maxTokens: 512,
+      temperature: 0, // 뜻·품사만 — 정확·일관 우선 (예문 미생성)
+      maxTokens: 200,
     })) as StoredWordResult;
   }
 

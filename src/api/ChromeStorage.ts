@@ -1,10 +1,12 @@
-import type { Bookmark, Example, HistoryEntry, Translation } from '../types';
+import type { Bookmark, Example, HistoryEntry, Origin, Translation } from '../types';
 
 export type StoredWordResult = {
   meanings: string[];
   pos: string;
   examples?: Example[];
   related?: string[];
+  origin?: Origin;
+  reading?: string; // 로컬 사전 표제어 읽기 — 토큰 읽기와 다르면 카드에 명시(동음이의어 가드)
 };
 
 export class ChromeStorage {

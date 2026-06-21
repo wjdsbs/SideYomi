@@ -1,4 +1,5 @@
 export type Source = { title: string; url: string };
+export type Origin = 'local' | 'ai';
 
 export type Example = { jp: string; kr: string };
 
