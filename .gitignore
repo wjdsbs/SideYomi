@@ -1,6 +1,9 @@
 node_modules/
 dist/
 public/dict/
+scripts/raw/
+scripts/build-dict/cache/
+scripts/build-dict/translate.cjs
 *.local
 .DS_Store
 .env*

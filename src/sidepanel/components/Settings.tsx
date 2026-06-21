@@ -198,6 +198,26 @@ export function Settings({ onClose }: Props) {
             <p style={{ fontSize: 11.5, color: 'var(--err)', margin: '8px 0 0' }}>{error}</p>
           )}
         </div>
+
+        <div>
+          <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--ink)', marginBottom: 4 }}>
+            사전 출처
+          </div>
+          <p style={{ fontSize: 11.5, color: 'var(--ink-mute)', margin: '0 0 4px' }}>
+            JMdict(EDRDG)와 Tatoeba 예문을 한국어로 기계번역해 제작했습니다.
+          </p>
+          <p style={{ fontSize: 11, color: 'var(--ink-faint)', margin: 0 }}>
+            CC BY-SA 4.0 ·{' '}
+            <a
+              href="https://creativecommons.org/licenses/by-sa/4.0/"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: 'var(--ink-faint)' }}
+            >
+              creativecommons.org/licenses/by-sa/4.0
+            </a>
+          </p>
+        </div>
       </div>
     </div>
   );

@@ -1,0 +1,31 @@
+This Korean dictionary data (jmdict-ko.json) is a derivative work produced
+by machine-translating JMdict and Tatoeba content into Korean. It is licensed
+under the Creative Commons Attribution-ShareAlike 4.0 International License
+(CC BY-SA 4.0). Full licence text: https://creativecommons.org/licenses/by-sa/4.0/legalcode
+
+Commercial use is permitted. The ShareAlike condition applies to this data
+file, not to the application code that reads it.
+
+---
+
+## Source attribution
+
+1. JMdict — Japanese-Multilingual Dictionary (word meanings)
+   © The Electronic Dictionary Research and Development Group (EDRDG)
+   and James William Breen. Licensed under CC BY-SA 4.0.
+   Project: https://www.edrdg.org/wiki/index.php/JMdict-EDICT_Dictionary_Project
+   Licence: https://www.edrdg.org/edrdg/licence.html
+
+2. Tatoeba Project (example sentences, bundled with JMdict's examples edition)
+   Licensed under CC BY 2.0 FR.
+   https://tatoeba.org/
+
+Modifications by SideYomi:
+
+- JMdict English glosses were machine-translated into Korean (Anthropic Claude, Haiku).
+- Tatoeba Japanese example sentences were machine-translated into Korean (Anthropic Claude, Haiku).
+
+Per the EDRDG licence, JMdict data should be kept reasonably current; regenerate
+this bundle periodically from the latest JMdict release (see scripts/build-dict/README.md).
+
+This file is for attribution only and is not legal advice.
