@@ -9,6 +9,10 @@ SideYomi는 Chrome Side Panel API를 활용해 원본 페이지를 전혀 수정
 
 ---
 
+## 데모
+
+![SideYomi 시연](docs/demo.gif)
+
 ## 주요 기능
 
 - **텍스트 선택 감지** - content script가 선택 영역을 사이드 패널로 전달 (DOM 수정 없음)
